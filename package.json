@@ -1,0 +1,21 @@
+{
+  "name": "law-watch",
+  "version": "1.0.0",
+  "description": "- 法的変化の早期発見による社会の安全性向上システム - System for improving societal safety through early detection of legal changes.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "hono": "^4.9.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
