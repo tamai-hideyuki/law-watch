@@ -15,10 +15,11 @@ describe('MockEGovClient', () => {
 
       const result = await client.searchLaws(query)
 
-      expect(result.totalCount).toBe(2)
-      expect(result.laws).toHaveLength(2)
+      expect(result.totalCount).toBe(3)
+      expect(result.laws).toHaveLength(3)
       expect(result.laws[0].name).toBe('労働基準法')
       expect(result.laws[1].name).toBe('労働安全衛生法')
+      expect(result.laws[2].name).toBe('労働者派遣事業の適正な運営の確保及び派遣労働者の保護等に関する法律')
     })
 
     it('該当しないキーワードで空の結果を返す', async () => {
