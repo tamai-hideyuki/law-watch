@@ -1,9 +1,31 @@
 import { EGovApi, EGovSearchResponse, EGovLawData } from '../../application/ports/e-gov-api'
 import { SearchQuery, LawId } from '../../domain/law'
 
+
+
 export class MockEGovClient implements EGovApi {
+  private hasChanges: boolean = false
+
+  // 変更をシミュレートするメソッド
+  simulateChange(): void {
+    this.hasChanges = true
+  }
+
+  // 変更をリセットするメソッド
+  resetChanges(): void {
+    this.hasChanges = false
+  }
   private getAllMockData(): EGovLawData[] {
     return [
+      // 労働関連
+      {
+        id: '322AC0000000049',
+        name: this.hasChanges ? '労働基準法（令和7年改正版）' : '労働基準法', // 変更をシミュレート
+        number: '昭和二十二年法律第四十九号',
+        promulgationDate: '1947-04-07',
+        category: '憲法・法律',
+        status: '施行中'
+      },
       // 労働関連
       {
         id: '322AC0000000049',
@@ -83,6 +105,7 @@ export class MockEGovClient implements EGovApi {
       }
     ]
   }
+  
 
   async searchLaws(query: SearchQuery): Promise<EGovSearchResponse> {
     await new Promise(resolve => setTimeout(resolve, 100))
@@ -98,9 +121,10 @@ export class MockEGovClient implements EGovApi {
     
     // キーワード検索の場合（既存ロジック）
     if (query.keyword.includes('労働')) {
+      const filteredLaws = this.getAllMockData().filter(law => law.name.includes('労働'))
       return {
-        laws: this.getAllMockData().filter(law => law.name.includes('労働')),
-        totalCount: 3
+        laws: filteredLaws,
+        totalCount: filteredLaws.length
       }
     }
 
@@ -136,6 +160,19 @@ export class MockEGovClient implements EGovApi {
   }
 
   async getLawDetail(id: LawId): Promise<EGovLawData> {
-    throw new Error('Not implemented yet')
+    const allLaws = this.getAllMockData()
+    const matchingLaws = allLaws.filter(l => l.id === id)
+    
+    if (matchingLaws.length === 0) {
+      throw new Error(`Law with id ${id} not found`)
+    }
+    
+    // hasChangesフラグがある場合は変更後の状態を、ない場合は最初の要素を返す
+    if (this.hasChanges && matchingLaws.length > 1) {
+      return matchingLaws[0] // 変更後の状態（hasChangesで条件分岐する最初の要素）
+    }
+    
+    // 重複がある場合は最後の要素（通常の状態）を返す
+    return matchingLaws[matchingLaws.length - 1]
   }
 }

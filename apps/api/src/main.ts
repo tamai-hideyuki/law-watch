@@ -3,9 +3,10 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { createSearchApp } from './presentation/api/search'
 import { createLawsApp } from './presentation/api/laws'
-import { MockEGovClient } from './infrastructure/e-gov/mock-e-gov-client'
 import { createMonitoringApp } from './presentation/api/monitoring'
+import { MockEGovClient } from './infrastructure/e-gov/mock-e-gov-client'
 import { MockWatchListRepository } from './infrastructure/database/mock-watch-list-repository'
+import { MockNotificationRepository } from './infrastructure/database/mock-notification-repository'
 
 const mockLawRepository = {
   save: async () => {},
@@ -15,21 +16,22 @@ const mockLawRepository = {
 
 const egovClient = new MockEGovClient()
 const mockWatchListRepository = new MockWatchListRepository()
+const mockNotificationRepository = new MockNotificationRepository()
 
-// メインアプリを作成する。
+// メインアプリを作成
 const app = new Hono()
 
-// CORSを設定
+// CORS設定
 app.use('/*', cors({
   origin: 'http://localhost:3001',
   allowHeaders: ['Content-Type'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
 }))
 
-// 各エンドポイントアプリを統合する。
+// 各エンドポイントアプリを統合
 const searchApp = createSearchApp(mockLawRepository, egovClient)
 const lawsApp = createLawsApp(mockLawRepository, egovClient)
-const monitoringApp = createMonitoringApp(mockWatchListRepository)
+const monitoringApp = createMonitoringApp(mockWatchListRepository, mockNotificationRepository, egovClient)
 
 app.route('/', searchApp)
 app.route('/', lawsApp)

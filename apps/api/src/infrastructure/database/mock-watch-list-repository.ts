@@ -1,6 +1,13 @@
 import { WatchListRepository } from '../../application/ports/watch-list-repository'
 import { WatchList } from '../../domain/monitoring/entities/watch-list'
 
+export interface MockWatchListRepository {
+  save(watchList: WatchList): Promise<void>
+  findById(id: string): Promise<WatchList | null>
+  findByUserId(userId: string): Promise<WatchList[]>
+  findAll(): Promise<WatchList[]>
+}
+
 export class MockWatchListRepository implements WatchListRepository {
   private watchLists: Map<string, WatchList> = new Map()
 
@@ -22,5 +29,9 @@ export class MockWatchListRepository implements WatchListRepository {
     
     // オブジェクトをコピーして返す（参照の共有を避けたい）
     return userWatchLists.map(watchList => ({ ...watchList }))
+  }
+  // 全ウォッチリストを取得
+  async findAll(): Promise<WatchList[]> {
+    return Array.from(this.watchLists.values()).map(watchList => ({ ...watchList }))
   }
 }

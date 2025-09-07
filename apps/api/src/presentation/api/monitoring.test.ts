@@ -2,8 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { testClient } from 'hono/testing'
 import { createMonitoringApp } from './monitoring'
 
+
 describe('Monitoring API', () => {
   let mockWatchListRepository: any
+  let mockNotificationRepository: any
+  let mockEGovApi: any
   let monitoringApp: ReturnType<typeof createMonitoringApp>
   let client: any
 
@@ -13,10 +16,22 @@ describe('Monitoring API', () => {
     mockWatchListRepository = {
       save: vi.fn(),
       findById: vi.fn(),
-      findByUserId: vi.fn()
+      findByUserId: vi.fn(),
+      findAll: vi.fn()
     }
 
-    monitoringApp = createMonitoringApp(mockWatchListRepository)
+    mockNotificationRepository = {
+      save: vi.fn(),
+      findByUserId: vi.fn(),
+      markAsRead: vi.fn()
+    }
+
+    mockEGovApi = {
+      fetchLawDetail: vi.fn(),
+      searchLaws: vi.fn()
+    }
+
+    monitoringApp = createMonitoringApp(mockWatchListRepository, mockNotificationRepository, mockEGovApi)
     client = testClient(monitoringApp)
   })
 
@@ -162,5 +177,52 @@ describe('Monitoring API', () => {
         expect(data.error).toBe('Watch list not found')
       })
     })
+
+    describe('GET /monitoring/notifications/:userId', () => {
+      it('ユーザーの通知一覧を取得する', async () => {
+        // Arrange
+        const mockNotifications = [
+          {
+            id: 'notification-001',
+            lawId: '322AC0000000049',
+            changeType: 'content_updated',
+            title: '労働基準法の改正',
+            description: '第36条が改正されました',
+            detectedAt: new Date().toISOString(),
+            isRead: false,
+            readAt: null
+          }
+        ]
+        
+        mockNotificationRepository.findByUserId.mockResolvedValue(mockNotifications)
+  
+        // Act
+        const response = await client['/monitoring/notifications/user-001'].$get()
+  
+        // Assert
+        expect(response.status).toBe(200)
+        
+        const data = await response.json() as any
+        expect(data.success).toBe(true)
+        expect(data.notifications).toHaveLength(1)
+        expect(data.notifications[0].title).toBe('労働基準法の改正')
+      })
+    })
   })
+    
+    describe('POST /monitoring/detect-changes', () => {
+      it('変更検知を実行する', async () => {
+        // Arrange
+        mockWatchListRepository.findAll.mockResolvedValue([])
+        
+        // Act
+        const response = await client['monitoring']['detect-changes'].$post()
+    
+        // Assert
+        expect(response.status).toBe(200)
+        
+        const data = await response.json()
+        expect(data.success).toBe(true)
+      })
+    })
 })

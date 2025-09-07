@@ -5,8 +5,15 @@ import { createLawId } from '../../domain/law'
 import type { WatchListRepository } from '../../application/ports/watch-list-repository'
 import { CreateWatchListUseCase } from '../../application/usecases/create-watch-list'
 import { RemoveLawFromWatchListUseCase } from '../../application/usecases/remove-law-from-watch-list'
+import { NotificationRepository } from '../../application/ports/notification-repository'
+import { DetectLawChangesUseCase } from '../../application/usecases/detect-law-changes'
+import { EGovApi } from '../../application/ports/e-gov-api'
 
-export const createMonitoringApp = (watchListRepository: WatchListRepository) => {
+export const createMonitoringApp = (
+  watchListRepository: WatchListRepository,
+  notificationRepository: NotificationRepository,
+  egovApi: EGovApi
+) => {
   const app = new Hono()
 
   // CORS設定
@@ -170,6 +177,77 @@ export const createMonitoringApp = (watchListRepository: WatchListRepository) =>
       throw error
     }
   })
+
+   // 通知一覧取得
+   app.get('/monitoring/notifications/:userId', async (c) => {
+    try {
+      const userId = c.req.param('userId')
+
+      if (!userId) {
+        return c.json({ error: 'userId is required' }, 400)
+      }
+
+      const notifications = await notificationRepository.findByUserId(userId)
+
+      return c.json({
+        success: true,
+        notifications: notifications.map(notification => ({
+          id: notification.id,
+          lawId: notification.lawId,
+          changeType: notification.changeType,
+          title: notification.title,
+          description: notification.description,
+          isRead: notification.isRead,
+          detectedAt: notification.detectedAt,
+          readAt: notification.readAt
+        }))
+      })
+    } catch (error) {
+      throw error
+    }
+  })
+
+  // 変更検知実行
+  app.post('/monitoring/detect-changes', async (c) => {
+    try {
+      const detectChangesUseCase = new DetectLawChangesUseCase(
+        watchListRepository,
+        egovApi,
+        notificationRepository
+      )
+      
+      const notifications = await detectChangesUseCase.execute()
+
+      return c.json({
+        success: true,
+        detectedChanges: notifications.length,
+        notifications: notifications.map(n => ({
+          id: n.id,
+          title: n.title,
+          changeType: n.changeType
+        }))
+      })
+    } catch (error) {
+      throw error
+    }
+  })
+
+  // 変更シミュレーション用エンドポイント（テスト用）
+app.post('/monitoring/simulate-change', async (c) => {
+  try {
+    // EGovApiクライアントで変更をシミュレート
+    if ('simulateChange' in egovApi) {
+      (egovApi as any).simulateChange()
+    }
+
+    return c.json({
+      success: true,
+      message: 'Law change simulated'
+    })
+  } catch (error) {
+    throw error
+  }
+})
 
   return app
 }
