@@ -1,6 +1,8 @@
 import { serve } from '@hono/node-server'
+import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { createSearchApp } from './presentation/api/search'
+import { createLawsApp } from './presentation/api/laws'
 import { MockEGovClient } from './infrastructure/e-gov/mock-e-gov-client'
 
 const mockLawRepository = {
@@ -10,13 +12,23 @@ const mockLawRepository = {
 }
 
 const egovClient = new MockEGovClient()
-const app = createSearchApp(mockLawRepository, egovClient)
 
+// メインアプリを作成する。
+const app = new Hono()
+
+// CORSを設定
 app.use('/*', cors({
   origin: 'http://localhost:3001',
   allowHeaders: ['Content-Type'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
 }))
+
+// 各エンドポイントアプリを統合する。
+const searchApp = createSearchApp(mockLawRepository, egovClient)
+const lawsApp = createLawsApp(mockLawRepository, egovClient)
+
+app.route('/', searchApp)
+app.route('/', lawsApp)
 
 const port = 3000
 console.log(`🔥 Law Watch API running on http://localhost:${port}`)
