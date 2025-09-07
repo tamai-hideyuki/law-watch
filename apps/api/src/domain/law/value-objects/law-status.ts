@@ -13,7 +13,7 @@ export const isValidLawStatus = (value: string): value is LawStatus => {
 
 export const createLawStatus = (value: string): LawStatus => {
     if(!isValidLawStatus(value)) {
-        throw new Error(`無効な法律ステータス: $(value)`)
+        throw new Error(`無効な法律ステータス: ${value}`)
     }
     return value
 }
