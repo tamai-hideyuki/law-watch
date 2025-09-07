@@ -10,10 +10,20 @@ export interface LawData {
 }
 
 export interface SearchResponse {
-  query: string
+  query?: string
   totalCount: number
   laws: LawData[]
   executedAt: string
+}
+
+export const getAllLaws = async (): Promise<SearchResponse> => {
+  const response = await fetch(`${API_BASE_URL}/laws`)
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch laws: ${response.status}`)
+  }
+  
+  return response.json()
 }
 
 export const searchLaws = async (query: string): Promise<SearchResponse> => {
