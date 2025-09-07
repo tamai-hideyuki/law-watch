@@ -4,6 +4,7 @@ import { AddLawToWatchListUseCase } from '../../application/usecases/add-law-to-
 import { createLawId } from '../../domain/law'
 import type { WatchListRepository } from '../../application/ports/watch-list-repository'
 import { CreateWatchListUseCase } from '../../application/usecases/create-watch-list'
+import { RemoveLawFromWatchListUseCase } from '../../application/usecases/remove-law-from-watch-list'
 
 export const createMonitoringApp = (watchListRepository: WatchListRepository) => {
   const app = new Hono()
@@ -119,19 +120,53 @@ export const createMonitoringApp = (watchListRepository: WatchListRepository) =>
     try {
       const body = await c.req.json()
       const { userId, name } = body
-  
+
       if (!userId) {
         return c.json({ error: 'userId is required' }, 400)
       }
       if (!name) {
         return c.json({ error: 'name is required' }, 400)
       }
-  
+
       const createWatchListUseCase = new CreateWatchListUseCase(watchListRepository)
       const watchList = await createWatchListUseCase.execute(userId, name)
-  
+
       return c.json({ success: true, watchList })
     } catch (error) {
+      throw error
+    }
+  })
+
+  // ウォッチリストから法令を削除
+  app.delete('/monitoring/watch/:watchListId/:lawId', async (c) => {
+    try {
+      const watchListId = c.req.param('watchListId')
+      const lawId = c.req.param('lawId')
+
+      if (!watchListId) {
+        return c.json({ error: 'watchListId is required' }, 400)
+      }
+      if (!lawId) {
+        return c.json({ error: 'lawId is required' }, 400)
+      }
+
+      const removeLawUseCase = new RemoveLawFromWatchListUseCase(watchListRepository)
+      const lawIdObj = createLawId(lawId)
+      const updatedWatchList = await removeLawUseCase.execute(watchListId, lawIdObj)
+
+      return c.json({
+        success: true,
+        watchList: {
+          id: updatedWatchList.id,
+          name: updatedWatchList.name,
+          lawIds: updatedWatchList.lawIds,
+          updatedAt: updatedWatchList.updatedAt
+        }
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Watch list not found') {
+        return c.json({ error: 'Watch list not found' }, 404)
+      }
       throw error
     }
   })

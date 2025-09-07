@@ -1,19 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAllLaws } from '../../hooks/use-all-laws'
 import { Button } from '../atoms/button'
-import { addLawToWatchList } from '../../lib/api'
+import { addLawToWatchList, getUserWatchLists } from '../../lib/api'
 
 export const LawsList = () => {
   const { data, loading } = useAllLaws()
   const [addingToWatch, setAddingToWatch] = useState<string | null>(null)
+  const [availableWatchList, setAvailableWatchList] = useState<string | null>(null)
+
+  // ユーザーのウォッチリストを取得
+  useEffect(() => {
+    const fetchWatchList = async () => {
+      try {
+        const watchListsResponse = await getUserWatchLists('user-001')
+        if (watchListsResponse.watchLists.length > 0) {
+          // 最初のウォッチリストを使用
+          setAvailableWatchList(watchListsResponse.watchLists[0].id)
+        }
+      } catch (error) {
+        console.error('Failed to fetch watch lists:', error)
+      }
+    }
+    
+    fetchWatchList()
+  }, [])
 
   const handleAddToWatch = async (lawId: string) => {
+    if (!availableWatchList) {
+      alert('ウォッチリストが見つかりません。先にウォッチリストを作成してください。')
+      return
+    }
+
     setAddingToWatch(lawId)
     try {
-      const watchListId = 'edf99125-83bb-4ad5-8ffa-aa3d0b469d73'
-      await addLawToWatchList(watchListId, lawId)
+      await addLawToWatchList(availableWatchList, lawId)
       alert('法令を監視リストに追加しました')
     } catch (error) {
       alert('監視リストへの追加に失敗しました')
@@ -63,7 +85,7 @@ export const LawsList = () => {
                 size="sm"
                 variant="outline"
                 onClick={() => handleAddToWatch(law.id)}
-                disabled={addingToWatch === law.id}
+                disabled={addingToWatch === law.id || !availableWatchList}
               >
                 {addingToWatch === law.id ? '追加中...' : '監視する'}
               </Button>

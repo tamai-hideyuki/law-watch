@@ -1,10 +1,27 @@
 'use client'
 
+import { useState } from 'react'
 import { useWatchLists } from '../../hooks/use-watch-lists'
+import { removeLawFromWatchList } from '../../lib/api'
 
 export const WatchLists = () => {
-  // 仮のユーザーID（認証機能実装後に修正）
   const { data, loading } = useWatchLists('user-001')
+  const [removingLaw, setRemovingLaw] = useState<string | null>(null)
+
+  const handleRemoveLaw = async (watchListId: string, lawId: string) => {
+    setRemovingLaw(lawId)
+    try {
+      await removeLawFromWatchList(watchListId, lawId)
+      alert('法令を監視リストから削除しました')
+      // ページをリロードして最新状態を取得
+      window.location.reload()
+    } catch (error) {
+      alert('削除に失敗しました')
+      console.error(error)
+    } finally {
+      setRemovingLaw(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -37,8 +54,12 @@ export const WatchLists = () => {
                 {watchList.lawIds.map((lawId) => (
                   <div key={lawId} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                     <span className="text-sm">{lawId}</span>
-                    <button className="text-red-600 hover:text-red-800 text-sm">
-                      削除
+                    <button 
+                      className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
+                      onClick={() => handleRemoveLaw(watchList.id, lawId)}
+                      disabled={removingLaw === lawId}
+                    >
+                      {removingLaw === lawId ? '削除中...' : '削除'}
                     </button>
                   </div>
                 ))}

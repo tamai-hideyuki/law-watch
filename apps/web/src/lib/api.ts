@@ -109,3 +109,16 @@ export const getUserWatchLists = async (userId: string) => {
   
   return response.json()
 }
+
+// 法令をウォッチリストから削除
+export const removeLawFromWatchList = async (watchListId: string, lawId: string): Promise<AddLawToWatchListResponse> => {
+  const response = await fetch(`${API_BASE_URL}/monitoring/watch/${watchListId}/${lawId}`, {
+    method: 'DELETE'
+  })
+  
+  if (!response.ok) {
+    throw new Error(`Failed to remove law from watch list: ${response.status}`)
+  }
+  
+  return response.json()
+}

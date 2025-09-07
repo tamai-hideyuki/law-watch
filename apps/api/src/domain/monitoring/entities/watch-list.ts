@@ -25,6 +25,13 @@ export const createWatchList = (params: {
         updatedAt: now
     }
 }
+export const removeLawFromWatchList = (watchList: WatchList, lawId: LawId): WatchList => {
+    return {
+        ...watchList,
+        lawIds: watchList.lawIds.filter(id => id !== lawId),
+        updatedAt: new Date()
+    }
+}
 
 export const addLawToWatchList = (watchList: WatchList, lawId: LawId): WatchList => {
     if (watchList.lawIds.includes(lawId)) {

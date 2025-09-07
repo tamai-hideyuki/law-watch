@@ -121,5 +121,46 @@ describe('Monitoring API', () => {
         expect(data.error).toBe('userId is required')
       })
     })
+
+    describe('DELETE /monitoring/watch/:watchListId/:lawId', () => {
+      it('ウォッチリストから法令を削除する', async () => {
+        // Arrange
+        const existingWatchList = {
+          id: 'watch-001',
+          userId: 'user-001',
+          name: 'テストリスト',
+          lawIds: ['322AC0000000049', '347AC0000000057'],
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        
+        mockWatchListRepository.findById.mockResolvedValue(existingWatchList)
+    
+        // Act
+        const response = await client['monitoring']['watch']['watch-001']['322AC0000000049'].$delete()
+    
+        // Assert
+        expect(response.status).toBe(200)
+        
+        const data = await response.json()
+        expect(data.success).toBe(true)
+        expect(data.watchList.lawIds).toHaveLength(1)
+        expect(mockWatchListRepository.save).toHaveBeenCalled()
+      })
+    
+      it('存在しないウォッチリストの場合は404を返す', async () => {
+        // Arrange
+        mockWatchListRepository.findById.mockResolvedValue(null)
+    
+        // Act
+        const response = await client['monitoring']['watch']['watch-001']['322AC0000000049'].$delete()
+    
+        // Assert
+        expect(response.status).toBe(404)
+        
+        const data = await response.json()
+        expect(data.error).toBe('Watch list not found')
+      })
+    })
   })
 })

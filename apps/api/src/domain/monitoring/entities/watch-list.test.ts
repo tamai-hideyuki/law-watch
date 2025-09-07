@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createWatchList, addLawToWatchList } from './watch-list'
+import { createWatchList, addLawToWatchList, removeLawFromWatchList } from './watch-list'
 import { createLawId } from '../../law'
 
 describe('WatchList', () => {
@@ -54,6 +54,53 @@ describe('WatchList', () => {
 
       // Assert
       expect(result.lawIds).toHaveLength(1)
+    })
+  })
+
+  describe('removeLawFromWatchList', () => {
+    it('ウォッチリストから法令を削除する', async () => {
+      // Arrange
+      const lawId1 = createLawId('322AC0000000049')
+      const lawId2 = createLawId('347AC0000000057')
+      const watchList = createWatchList({
+        id: 'watch-001',
+        userId: 'user-001',
+        name: 'テストリスト'
+      })
+      const watchListWithLaws = addLawToWatchList(
+        addLawToWatchList(watchList, lawId1), 
+        lawId2
+      )
+    
+      // 少し待機して時刻を確実に変える
+      await new Promise(resolve => setTimeout(resolve, 1))
+    
+      // Act
+      const result = removeLawFromWatchList(watchListWithLaws, lawId1)
+    
+      // Assert
+      expect(result.lawIds).toHaveLength(1)
+      expect(result.lawIds[0]).toBe(lawId2)
+      expect(result.updatedAt.getTime()).toBeGreaterThan(watchListWithLaws.updatedAt.getTime())
+    })
+  
+    it('存在しない法令の削除は何もしない', () => {
+      // Arrange
+      const lawId1 = createLawId('322AC0000000049')
+      const nonExistentLawId = createLawId('999999999')
+      const watchList = createWatchList({
+        id: 'watch-001',
+        userId: 'user-001',
+        name: 'テストリスト'
+      })
+      const watchListWithLaw = addLawToWatchList(watchList, lawId1)
+  
+      // Act
+      const result = removeLawFromWatchList(watchListWithLaw, nonExistentLawId)
+  
+      // Assert
+      expect(result.lawIds).toHaveLength(1)
+      expect(result.lawIds[0]).toBe(lawId1)
     })
   })
 })
