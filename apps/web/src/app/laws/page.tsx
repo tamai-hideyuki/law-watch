@@ -7,6 +7,7 @@ export default function LawsPage() {
       <nav className="p-4 bg-white shadow-sm">
         <div className="container mx-auto flex gap-4">
           <Link href="/" className="text-blue-600 hover:underline">検索</Link>
+          <Link href="/monitoring" className="text-blue-600 hover:underline">監視中</Link>
         </div>
       </nav>
       <AllLawsPage />
