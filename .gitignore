@@ -3,3 +3,5 @@ node_modules
 .env.local
 pnpm-lock.yaml
 .vscode
+apps/web/.next/
+apps/web/tsconfig.json

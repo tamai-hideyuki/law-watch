@@ -5,7 +5,7 @@ import type { LawRepository } from '../../application/ports/law-repository'
 import type { EGovApi } from '../../application/ports/e-gov-api'
 import { cors } from 'hono/cors'
 
-export const createSearchApp = (lawRepository: LawRepository, egovApi: EGovApi) => {
+export const createLawsApp = (lawRepository: LawRepository, egovApi: EGovApi) => {
     const app = new Hono()
 
     app.use('*', cors({
@@ -21,18 +21,12 @@ export const createSearchApp = (lawRepository: LawRepository, egovApi: EGovApi) 
       return c.json({ error: 'Internal server error' }, 500)
     })
   
-    app.get('/search', async (c) => {
-      const query = c.req.query('q')
-      
-      if (!query) {
-        return c.json({ error: 'Query parameter is required' }, 400)
-      }
-  
-      const searchQuery = createSimpleSearchQuery(query)
+    app.get('/laws', async (c) => {
+      // 全法令取得のため特別なクエリマーカーを使用してみた
+      const searchQuery = createSimpleSearchQuery('__ALL_LAWS__')
       const result = await searchUseCase.execute(searchQuery)
       
       return c.json({
-        query: query,
         totalCount: result.totalCount,
         laws: result.laws,
         executedAt: result.executedAt
