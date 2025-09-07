@@ -56,3 +56,39 @@ Webサーバー (localhost:3001):
 ```
 curl "http://localhost:3000/search?q=$(urlencode "労働")"
 ```
+
+```
+Law Watch システムの実装済み機能一覧
+
+  基本機能
+
+  1. 法令検索 - キーワードによる日本の法令検索（労働、建築、消費者、環境、交通カテゴリ対応）
+  2. 全法令一覧表示 - データベース内の全法令を閲覧可能
+  3. 監視リスト機能 - ユーザーごとの法令監視リスト作成・管理
+  4. 監視追加/削除 - ワンクリックで法令を監視リストに追加・削除
+  5. 3ページ構成 - 検索（/）、全法令（/laws）、監視中（/monitoring）
+
+  API エンドポイント
+
+  - GET /search?q={keyword} - 法令検索
+  - GET /laws - 全法令取得
+  - POST /monitoring/watch-list - 監視リスト作成
+  - POST /monitoring/watch - 法令を監視リストに追加
+  - DELETE /monitoring/watch/{watchListId}/{lawId} - 監視解除
+  - GET /monitoring/watch/{userId} - ユーザーの監視リスト取得
+
+  技術的特徴
+
+  - DDD設計 - ドメイン駆動設計による4層アーキテクチャ
+  - TypeScript - フロントエンド・バックエンド両方で型安全性確保
+  - Next.js 14 + Hono - モダンなフレームワーク構成
+  - テスト完備 - Vitestによる包括的なユニットテスト
+  - モノレポ構成 - pnpmワークスペースによる効率的な管理
+
+  現在の制限事項
+
+  - e-Gov APIはモック実装（9つの実在法令データ）
+  - ユーザー認証なし（user-001固定）
+  - データベース永続化なし（メモリ内保存）
+
+```
