@@ -1,0 +1,117 @@
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import { AddLawToWatchListUseCase } from '../../application/usecases/add-law-to-watch-list'
+import { createLawId } from '../../domain/law'
+import type { WatchListRepository } from '../../application/ports/watch-list-repository'
+
+export const createMonitoringApp = (watchListRepository: WatchListRepository) => {
+  const app = new Hono()
+
+  // CORS設定
+  app.use('*', cors({
+    origin: ['http://localhost:3001'],
+    allowHeaders: ['Content-Type'],
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
+  }))
+
+  // エラーハンドリング
+  app.onError((err, c) => {
+    console.error('Monitoring API Error:', err)
+    return c.json({ error: 'Internal server error' }, 500)
+  })
+
+  // ウォッチリストに法令を追加
+  app.post('/monitoring/watch', async (c) => {
+    try {
+      const body = await c.req.json()
+      const { watchListId, lawId } = body
+
+      // バリデーション
+      if (!watchListId) {
+        return c.json({ error: 'watchListId is required' }, 400)
+      }
+      if (!lawId) {
+        return c.json({ error: 'lawId is required' }, 400)
+      }
+
+      // ビジネスロジックを実行
+      const addLawUseCase = new AddLawToWatchListUseCase(watchListRepository)
+      const lawIdObj = createLawId(lawId)
+      const updatedWatchList = await addLawUseCase.execute(watchListId, lawIdObj)
+
+      // レスポンスを返す
+      return c.json({
+        success: true,
+        watchList: {
+          id: updatedWatchList.id,
+          name: updatedWatchList.name,
+          lawIds: updatedWatchList.lawIds,
+          updatedAt: updatedWatchList.updatedAt
+        }
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Watch list not found') {
+        return c.json({ error: 'Watch list not found' }, 404)
+      }
+      throw error // 他のエラーはonErrorで処理
+    }
+  })
+
+  // ウォッチリスト一覧取得
+  app.get('/monitoring/watch/:userId', async (c) => {
+    try {
+      const userId = c.req.param('userId')
+
+      if (!userId) {
+        return c.json({ error: 'userId is required' }, 400)
+      }
+
+      const watchLists = await watchListRepository.findByUserId(userId)
+
+      return c.json({
+        success: true,
+        watchLists: watchLists.map(watchList => ({
+          id: watchList.id,
+          name: watchList.name,
+          lawIds: watchList.lawIds,
+          createdAt: watchList.createdAt,
+          updatedAt: watchList.updatedAt
+        }))
+      })
+    } catch (error) {
+      throw error // onErrorで処理
+    }
+  })
+
+  // 特定のウォッチリスト取得
+  app.get('/monitoring/watch/detail/:watchListId', async (c) => {
+    try {
+      const watchListId = c.req.param('watchListId')
+
+      if (!watchListId) {
+        return c.json({ error: 'watchListId is required' }, 400)
+      }
+
+      const watchList = await watchListRepository.findById(watchListId)
+
+      if (!watchList) {
+        return c.json({ error: 'Watch list not found' }, 404)
+      }
+
+      return c.json({
+        success: true,
+        watchList: {
+          id: watchList.id,
+          name: watchList.name,
+          lawIds: watchList.lawIds,
+          createdAt: watchList.createdAt,
+          updatedAt: watchList.updatedAt
+        }
+      })
+    } catch (error) {
+      throw error // onErrorで処理
+    }
+  })
+
+  return app
+}
