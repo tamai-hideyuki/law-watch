@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { AddLawToWatchListUseCase } from '../../application/usecases/add-law-to-watch-list'
 import { createLawId } from '../../domain/law'
 import type { WatchListRepository } from '../../application/ports/watch-list-repository'
+import { CreateWatchListUseCase } from '../../application/usecases/create-watch-list'
 
 export const createMonitoringApp = (watchListRepository: WatchListRepository) => {
   const app = new Hono()
@@ -110,6 +111,28 @@ export const createMonitoringApp = (watchListRepository: WatchListRepository) =>
       })
     } catch (error) {
       throw error // onErrorで処理
+    }
+  })
+
+  // ウォッチリスト作成
+  app.post('/monitoring/watch-list', async (c) => {
+    try {
+      const body = await c.req.json()
+      const { userId, name } = body
+  
+      if (!userId) {
+        return c.json({ error: 'userId is required' }, 400)
+      }
+      if (!name) {
+        return c.json({ error: 'name is required' }, 400)
+      }
+  
+      const createWatchListUseCase = new CreateWatchListUseCase(watchListRepository)
+      const watchList = await createWatchListUseCase.execute(userId, name)
+  
+      return c.json({ success: true, watchList })
+    } catch (error) {
+      throw error
     }
   })
 

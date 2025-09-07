@@ -84,5 +84,42 @@ describe('Monitoring API', () => {
       const data = await response.json()
       expect(data.error).toBe('watchListId is required')
     })
+    
+    describe('POST /monitoring/watch-list', () => {
+      it('新しいウォッチリストを作成する', async () => {
+        // Act
+        const response = await client['monitoring']['watch-list'].$post({
+          json: {
+            userId: 'user-001',
+            name: 'マイウォッチリスト'
+          }
+        })
+    
+        // Assert
+        expect(response.status).toBe(200)
+        
+        const data = await response.json()
+        expect(data.success).toBe(true)
+        expect(data.watchList.userId).toBe('user-001')
+        expect(data.watchList.name).toBe('マイウォッチリスト')
+        expect(data.watchList.id).toBeDefined()
+        expect(mockWatchListRepository.save).toHaveBeenCalled()
+      })
+    
+      it('userIdが未指定の場合は400を返す', async () => {
+        // Act
+        const response = await client['monitoring']['watch-list'].$post({
+          json: {
+            name: 'テストリスト'
+          }
+        })
+    
+        // Assert
+        expect(response.status).toBe(400)
+        
+        const data = await response.json()
+        expect(data.error).toBe('userId is required')
+      })
+    })
   })
 })
