@@ -14,3 +14,29 @@
 ## ブランチ構成
 - 通常作業：feature/LW-<番号>
 - 
+
+## 関数型DDDについて
+```
+┌─ Presentation層 ─────────────────
+│ HTTP Request/Response             ← 副作用の境界
+│ - search.ts (APIエンドポイント)    
+└─────────────────────────────────
+           ↓
+┌─ Application層 ──────────────────
+│ UseCase (オーケストレーション)       ← 純粋関数中心
+│ - SearchLawsUseCase             
+│ - Ports (インターフェース定義)     
+└─────────────────────────────────
+           ↓
+┌─ Domain層 ──────────────────────
+│ ビジネスロジック (純粋関数のみ)      ← 完全に純粋
+│ - Entities, Value Objects       
+│ - Business Rules                
+└─────────────────────────────────
+           ↑
+┌─ Infrastructure層 ───────────────
+│ 副作用の実装                      ← 副作用の境界
+│ - MockEGovClient                
+│ - Database Access               
+└─────────────────────────────────
+```
