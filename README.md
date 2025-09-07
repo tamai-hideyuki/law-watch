@@ -40,3 +40,9 @@
 │ - Database Access               
 └─────────────────────────────────
 ```
+
+## 検索コマンド
+
+```
+curl "http://localhost:3000/search?q=$(urlencode "労働")"
+```
