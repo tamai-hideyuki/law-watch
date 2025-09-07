@@ -9,9 +9,11 @@ export const useSearchLaws = () => {
   const [error, setError] = useState<string | null>(null)
 
   const search = async (query: string) => {
+    console.log('検索開始:', query)
     setLoading(true)
     
     const result = await searchLaws(query)
+    console.log('検索結果:', result)
     setData(result)
     setLoading(false)
   }

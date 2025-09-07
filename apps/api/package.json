@@ -5,5 +5,8 @@
   },
   "devDependencies": {
     "tsx": "^4.20.5"
+  },
+  "dependencies": {
+    "hono": "^4.9.6"
   }
 }

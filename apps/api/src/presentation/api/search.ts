@@ -3,9 +3,17 @@ import { SearchLawsUseCase } from '../../application/usecases/search-laws'
 import { createSimpleSearchQuery } from '../../domain/law'
 import type { LawRepository } from '../../application/ports/law-repository'
 import type { EGovApi } from '../../application/ports/e-gov-api'
+import { cors } from 'hono/cors'
 
 export const createSearchApp = (lawRepository: LawRepository, egovApi: EGovApi) => {
     const app = new Hono()
+
+    app.use('*', cors({
+      origin: ['http://localhost:3001'],
+      allowHeaders: ['Content-Type'],
+      allowMethods: ['GET', 'POST'],
+    }))
+
     const searchUseCase = new SearchLawsUseCase(lawRepository, egovApi)
   
     app.onError((err, c) => {
