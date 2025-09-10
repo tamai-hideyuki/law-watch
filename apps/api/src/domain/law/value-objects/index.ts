@@ -26,3 +26,16 @@ export {
   isDateInRange,
   formatDateRange 
 } from './date-range'
+
+export {
+  type SearchQuery,
+  createSearchQuery,
+  createSimpleSearchQuery,
+  isValidSearchQuery
+} from './search-query'
+
+export {
+  type SearchResult,
+  createSearchResult,
+  createEmptySearchResult
+} from './search-result'
