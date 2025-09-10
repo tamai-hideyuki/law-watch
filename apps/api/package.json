@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "start": "tsx src/main.ts"
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test:safe": "pnpm typecheck && vitest run",
+    "test:watch:safe": "pnpm typecheck && vitest watch"
   },
   "devDependencies": {
     "@types/nodemailer": "^7.0.1",

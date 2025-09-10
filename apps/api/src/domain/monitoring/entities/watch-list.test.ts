@@ -87,7 +87,7 @@ describe('WatchList', () => {
     it('存在しない法令の削除は何もしない', () => {
       // Arrange
       const lawId1 = createLawId('322AC0000000049')
-      const nonExistentLawId = createLawId('999999999')
+      const nonExistentLawId = createLawId('999AC0000000999') // 有効なフォーマットだが存在しない法令ID
       const watchList = createWatchList({
         id: 'watch-001',
         userId: 'user-001',
