@@ -71,15 +71,15 @@ run_test() {
 
 # Test 1: 全法令一覧取得
 run_test "全法令一覧取得" \
-    'curl -s "$BASE_URL/laws" | jq -e ".success == true and .laws | length > 0"'
+    'curl -s "$BASE_URL/laws" | jq -e ".totalCount > 0 and (.laws | length) > 0"'
 
 # Test 2: キーワード検索（労働）
 run_test "キーワード検索（労働）" \
-    'curl -s "$BASE_URL/search?q=労働" | jq -e ".success == true and .laws | length > 0"'
+    'curl -s "$BASE_URL/search?q=%E5%8A%B4%E5%83%8D" | jq -e ".totalCount > 0 and (.laws | length) > 0"'
 
 # Test 3: キーワード検索（建築）
 run_test "キーワード検索（建築）" \
-    'curl -s "$BASE_URL/search?q=建築" | jq -e ".success == true"'
+    'curl -s "$BASE_URL/search?q=%E5%BB%BA%E7%AF%89" | jq -e ".totalCount >= 0 and .laws"'
 
 # Test 4: 監視リスト作成
 echo -e "${BLUE}🧪 Test: 監視リスト作成${NC}"
