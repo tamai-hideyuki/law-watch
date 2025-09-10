@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { WatchListSelector } from '../molecules/watch-list-selector'
 import { getAllLaws, getUserWatchLists, createWatchList, addLawToWatchList, removeLawFromWatchList } from '../../lib/api'
 import type { LawData, WatchList } from '../../lib/api'
 
@@ -11,6 +12,8 @@ export const LawsList = () => {
   const [watchLists, setWatchLists] = useState<WatchList[]>([])
   const [watchingLaws, setWatchingLaws] = useState<Set<string>>(new Set())
   const [processingLaw, setProcessingLaw] = useState<string | null>(null)
+  const [showSelector, setShowSelector] = useState(false)
+  const [selectedLaw, setSelectedLaw] = useState<LawData | null>(null)
   
   const userId = 'user-001'
 
@@ -47,41 +50,75 @@ export const LawsList = () => {
   }, [])
 
   const handleToggleWatch = async (law: LawData) => {
-    setProcessingLaw(law.id)
+    const isWatching = watchingLaws.has(law.id)
     
-    try {
-      const isWatching = watchingLaws.has(law.id)
-      
-      if (isWatching) {
-        // 監視解除
-        const watchList = watchLists.find(list => list.lawIds.includes(law.id))
-        if (watchList) {
-          await removeLawFromWatchList(watchList.id, law.id)
-          setWatchingLaws(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(law.id)
-            return newSet
-          })
-        }
-      } else {
-        // 監視追加
-        let watchList = watchLists[0]
+    if (isWatching) {
+      // 監視解除 - 該当する全てのリストから削除
+      setProcessingLaw(law.id)
+      try {
+        const listsWithLaw = watchLists.filter(list => list.lawIds.includes(law.id))
+        await Promise.all(
+          listsWithLaw.map(list => removeLawFromWatchList(list.id, law.id))
+        )
+        setWatchingLaws(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(law.id)
+          return newSet
+        })
         
-        // ウォッチリストがない場合は作成
-        if (!watchList) {
-          const response = await createWatchList(userId, 'デフォルトリスト')
-          watchList = response.watchList
-          setWatchLists([watchList])
-        }
-        
-        await addLawToWatchList(watchList.id, law.id)
-        setWatchingLaws(prev => new Set(prev).add(law.id))
+        // ウォッチリストデータを更新
+        const updatedResponse = await getUserWatchLists(userId)
+        setWatchLists(updatedResponse.watchLists || [])
+      } catch (err) {
+        console.error('Failed to remove from watch:', err)
+        alert('監視解除に失敗しました')
+      } finally {
+        setProcessingLaw(null)
       }
+    } else {
+      // 監視追加 - リスト選択画面を表示
+      setSelectedLaw(law)
+      setShowSelector(true)
+    }
+  }
+
+  const handleWatchListSelect = async (watchListId: string) => {
+    if (!selectedLaw) return
+    
+    setProcessingLaw(selectedLaw.id)
+    try {
+      await addLawToWatchList(watchListId, selectedLaw.id)
+      setWatchingLaws(prev => new Set(prev).add(selectedLaw.id))
+      
+      // ウォッチリストデータを更新
+      const updatedResponse = await getUserWatchLists(userId)
+      setWatchLists(updatedResponse.watchLists || [])
     } catch (err) {
-      console.error('Failed to toggle watch:', err)
-      alert('操作に失敗しました')
+      console.error('Failed to add to watch list:', err)
+      alert('監視リストへの追加に失敗しました')
     } finally {
       setProcessingLaw(null)
+      setSelectedLaw(null)
+    }
+  }
+
+  const handleCreateNewWatchList = async (name: string) => {
+    if (!selectedLaw) return
+    
+    setProcessingLaw(selectedLaw.id)
+    try {
+      const response = await createWatchList(userId, name)
+      const newWatchList = response.watchList
+      
+      await addLawToWatchList(newWatchList.id, selectedLaw.id)
+      setWatchingLaws(prev => new Set(prev).add(selectedLaw.id))
+      setWatchLists(prev => [...prev, newWatchList])
+    } catch (err) {
+      console.error('Failed to create new watch list:', err)
+      alert('新しい監視リストの作成に失敗しました')
+    } finally {
+      setProcessingLaw(null)
+      setSelectedLaw(null)
     }
   }
 
@@ -150,6 +187,17 @@ export const LawsList = () => {
           </div>
         )
       })}
+
+      <WatchListSelector
+        watchLists={watchLists}
+        isOpen={showSelector}
+        onClose={() => {
+          setShowSelector(false)
+          setSelectedLaw(null)
+        }}
+        onSelect={handleWatchListSelect}
+        onCreateNew={handleCreateNewWatchList}
+      />
     </div>
   )
 }
