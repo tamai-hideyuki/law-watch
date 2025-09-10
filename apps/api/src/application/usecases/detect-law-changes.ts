@@ -1,9 +1,9 @@
 import { WatchListRepository } from '../ports/watch-list-repository'
-import { EGovApi } from '../ports/e-gov-api'
+import { EGovApi, EGovLawData } from '../ports/e-gov-api'
 import { NotificationRepository } from '../../application/ports/notification-repository'
 import { SendNotificationUseCase } from './send-notification'
 import { createLawChangeNotification, ChangeType, LawChangeNotification } from '../../domain/monitoring/entities/law-change-notification'
-import { createLawId } from '../../domain/law'
+import { createLawId, LawId } from '../../domain/law'
 
 export class DetectLawChangesUseCase {
   constructor(
@@ -62,7 +62,7 @@ export class DetectLawChangesUseCase {
     return notifications
   }
 
-  private async detectChanges(lawId: any, currentLawData: any): Promise<boolean> {
+  private async detectChanges(lawId: LawId, currentLawData: EGovLawData): Promise<boolean> {
     // 名前に「改正版」が含まれている場合は変更ありとみなす
     if (currentLawData.name.includes('改正版') || currentLawData.name.includes('令和7年改正版')) {
       return true

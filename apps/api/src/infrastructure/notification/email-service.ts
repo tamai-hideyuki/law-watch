@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer'
+import nodemailer, { Transporter } from 'nodemailer'
 
 export interface LawChangeNotification {
     title: string
@@ -14,7 +14,7 @@ export interface LawChangeNotification {
   }
   
   export class EmailService {
-    private transporter: any
+    private transporter: Transporter | null = null
   
     async initialize() {
       // Ethereal用テストアカウント自動作成
@@ -45,6 +45,10 @@ export interface LawChangeNotification {
         
         // メールアドレスのバリデーション
         this.validateEmail(toEmail)
+        
+        if (!this.transporter) {
+          throw new Error('Email transporter not initialized')
+        }
         
         // メール送信
         const info = await this.transporter.sendMail({

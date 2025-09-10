@@ -244,7 +244,7 @@ app.post('/monitoring/simulate-change', async (c) => {
   try {
     // EGovApiクライアントで変更をシミュレート
     if ('simulateChange' in egovApi) {
-      (egovApi as any).simulateChange()
+      (egovApi as { simulateChange: () => void }).simulateChange()
     }
 
     return c.json({
