@@ -345,11 +345,72 @@ export SMTP_USER=your-email@gmail.com
 export SMTP_PASS=your-app-password
 ```
 
+## データベース設計・実装
+
+### Prisma + PostgreSQL構成
+- **ORM**: Prisma 6.15.0
+- **データベース**: PostgreSQL 16（Docker構成）
+- **接続**: `postgresql://postgres:password@localhost:5432/law_watch_dev`
+
+### データベーステーブル構成
+
+#### 作成済みテーブル（7テーブル）
+
+| テーブル名 | 説明 | 主要カラム |
+|-----------|------|-----------|
+| `laws` | 法令マスタ | id, name, number, category, status, promulgationDate |
+| `watch_lists` | 監視リスト | id, userId, name, createdAt, updatedAt |
+| `watch_list_laws` | 監視リスト-法令中間 | watchListId, lawId, addedAt |
+| `notifications` | 法令変更通知 | id, lawId, userId, changeType, title, description, isRead |
+| `users` | ユーザー管理（将来用） | id, email, name, createdAt, updatedAt |
+| `law_change_histories` | 変更履歴（将来用） | id, lawId, changeType, changeDetails, detectedAt |
+| `_prisma_migrations` | マイグレーション履歴 | - |
+
+#### リレーション設計
+- **Law ↔ WatchListLaw**: 1対多（カスケード削除）
+- **WatchList ↔ WatchListLaw**: 1対多（カスケード削除）
+- **Law ↔ Notification**: 1対多（カスケード削除）
+- **インデックス**: userId, isRead, lawId に設定済み
+
+### Docker環境設定
+
+```yaml
+# docker-compose.yml
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: law-watch-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: law_watch_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+```
+
+### セットアップ手順
+
+```bash
+# 1. PostgreSQL起動
+docker-compose up -d
+
+# 2. Prisma依存関係インストール
+pnpm add prisma @prisma/client
+
+# 3. マイグレーション実行
+npx prisma migrate dev --name create_tables
+
+# 4. Prisma Studio起動（GUI確認）
+npx prisma studio  # http://localhost:5555
+```
+
 ## 現在の制限事項・TODO
 
 ### 制限事項
 1. **ユーザー認証なし** - `user-001` 固定
-2. **データ永続化なし** - メモリ内保存（サーバー再起動で消失）
+2. **Repository実装未完了** - MockRepository使用中（DB永続化未実装）
 3. **e-Gov API連携なし** - モック実装のみ
 
 ### 技術的課題
@@ -361,6 +422,7 @@ export SMTP_PASS=your-app-password
 2. ✅ **変更検知・通知システム** - 完全動作確認済み
 3. ✅ **監視リスト管理** - CRUD操作完備
 4. ✅ **法令検索・一覧表示** - フロントエンド統合済み
+5. ✅ **データベース設計・構築** - PostgreSQL + Prisma完全セットアップ済み
 
 ### トラブルシューティング
 
@@ -406,9 +468,15 @@ kill -9 [PID]
 6. **通知設定のカスタマイズ**
 7. **定期実行スケジューラー（cron）**
 
+### 次のタスク
+1. **PrismaRepository実装** - MockRepository → 実データベース永続化
+2. **シードデータ投入** - 既存の9つの法令データをDBに登録
+3. **Repository統合テスト** - CRUD操作の動作確認
+
 ## 最終更新
 - **日付**: 2025-09-10
-- **状態**: メール通知システム統合完了
-- **実装**: Ethereal Email による開発環境メール送信確認済み
+- **状態**: データベース設計・構築完了
+- **実装**: PostgreSQL + Prisma環境構築、全7テーブル作成済み
+- **DB接続**: 動作確認済み、Prisma Studio利用可能
 - **テスト**: 全13テスト通過
-- **機能**: コア機能すべて実装・動作確認済み
+- **機能**: データ永続化準備完了

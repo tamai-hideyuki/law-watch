@@ -22,10 +22,6 @@ export class SearchLawsUseCase {
       })
     )
 
-    return createSearchResult({
-      laws,
-      totalCount: apiResponse.totalCount,
-      query
-    })
+    return createSearchResult(laws, apiResponse.totalCount, query.keyword)
   }
 }

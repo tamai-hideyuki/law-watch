@@ -10,8 +10,10 @@
     "tsx": "^4.20.5"
   },
   "dependencies": {
+    "@prisma/client": "^6.15.0",
     "dotenv": "^17.2.2",
     "hono": "^4.9.6",
-    "nodemailer": "^7.0.6"
+    "nodemailer": "^7.0.6",
+    "prisma": "^6.15.0"
   }
 }

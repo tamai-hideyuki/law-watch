@@ -54,7 +54,7 @@ describe('SearchLawsUseCase', () => {
     expect(result).toEqual(expect.objectContaining({
       laws: expect.arrayContaining([expect.objectContaining({ name: '労働基準法' })]),
       totalCount: 1,
-      query
+      query: query.keyword
     }))
     expect(result.executedAt).toBeInstanceOf(Date)
     expect(mockEGovApi.searchLaws).toHaveBeenCalledWith(query)
@@ -69,7 +69,7 @@ describe('SearchLawsUseCase', () => {
     expect(result).toEqual(expect.objectContaining({
       laws: [],
       totalCount: 0,
-      query
+      query: query.keyword
     }))
     expect(result.executedAt).toBeInstanceOf(Date)
   })
