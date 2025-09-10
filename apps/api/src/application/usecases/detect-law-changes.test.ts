@@ -6,6 +6,7 @@ describe('DetectLawChangesUseCase', () => {
   let mockWatchListRepository: any
   let mockEGovApi: any
   let mockNotificationRepository: any
+  let mockSendNotificationUseCase: any
   let useCase: DetectLawChangesUseCase
 
   beforeEach(() => {
@@ -29,14 +30,19 @@ describe('DetectLawChangesUseCase', () => {
       markAsRead: vi.fn()
     }
 
+    mockSendNotificationUseCase = {
+      execute: vi.fn().mockResolvedValue({ success: true })
+    }
+
     useCase = new DetectLawChangesUseCase(
       mockWatchListRepository,
       mockEGovApi,
-      mockNotificationRepository
+      mockNotificationRepository,
+      mockSendNotificationUseCase // 追加
     )
   })
 
-  it('監視中の法令に変更がある場合、通知を作成する', async () => {
+  it('監視中の法令に変更がある場合、通知を作成しメール送信する', async () => {
     // Arrange
     const watchLists = [{
       id: 'watch-001',
@@ -66,5 +72,11 @@ describe('DetectLawChangesUseCase', () => {
     expect(notifications).toHaveLength(1)
     expect(notifications[0].title).toContain('労働基準法')
     expect(mockNotificationRepository.save).toHaveBeenCalled()
+    expect(mockSendNotificationUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: expect.stringContaining('労働基準法'),
+        description: '法令の内容が更新されました。詳細をご確認ください。'
+      })
+    )
   })
 })
