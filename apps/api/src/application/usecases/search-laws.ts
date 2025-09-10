@@ -1,4 +1,4 @@
-import { SearchQuery, SearchResult, createSearchResult, createLaw } from '../../domain/law'
+import { SimpleSearchQuery as SearchQuery, SimpleSearchResult as SearchResult, createSimpleSearchResult as createSearchResult, createLaw } from '../../domain/law'
 import { LawRepository } from '../ports/law-repository'
 import { EGovApi } from '../ports/e-gov-api'
 

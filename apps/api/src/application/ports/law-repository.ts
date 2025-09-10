@@ -1,4 +1,4 @@
-import { Law, LawId, SearchQuery, SearchResult } from '../../domain/law'
+import { Law, LawId, SimpleSearchQuery as SearchQuery, SimpleSearchResult as SearchResult } from '../../domain/law'
 
 export interface LawRepository {
   save(law: Law): Promise<void>

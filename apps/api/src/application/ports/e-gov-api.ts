@@ -1,4 +1,4 @@
-import { SearchQuery, LawId } from '../../domain/law'
+import { SimpleSearchQuery as SearchQuery, LawId } from '../../domain/law'
 
 export interface EGovLawData {
   id: string

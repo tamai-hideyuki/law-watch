@@ -9,7 +9,10 @@
     "dev:web": "pnpm --filter web dev",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "typecheck": "tsc --noEmit",
+    "test:safe": "pnpm typecheck && vitest run",
+    "test:api:safe": "pnpm --filter api test:safe"
   },
   "keywords": [],
   "author": "",

@@ -4,13 +4,16 @@
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "start": "tsx src/main.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --project tsconfig.typecheck.json",
     "test:safe": "pnpm typecheck && vitest run",
     "test:watch:safe": "pnpm typecheck && vitest watch"
   },
   "devDependencies": {
     "@types/nodemailer": "^7.0.1",
-    "tsx": "^4.20.5"
+    "@vitest/ui": "^3.2.4",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
