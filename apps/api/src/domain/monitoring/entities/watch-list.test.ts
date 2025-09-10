@@ -73,7 +73,7 @@ describe('WatchList', () => {
       )
     
       // 少し待機して時刻を確実に変える
-      await new Promise(resolve => setTimeout(resolve, 1))
+      await new Promise(resolve => setTimeout(resolve, 10))
     
       // Act
       const result = removeLawFromWatchList(watchListWithLaws, lawId1)
