@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 法令エンティティ
+model Law {
+  id               String   @id // 法令ID (例: "322AC0000000049")
+  name             String   // 法令名
+  number           String   // 法令番号
+  category         String   // カテゴリ (労働、建築、消費者、環境、交通)
+  status           String   // 状態 (active, amended, abolished)
+  promulgationDate DateTime // 公布日
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // リレーション
+  watchListLaws WatchListLaw[]
+  notifications Notification[]
+
+  @@map("laws")
+}
+
+// 監視リストエンティティ
+model WatchList {
+  id        String   @id @default(uuid())
+  userId    String   // ユーザーID
+  name      String   // 監視リスト名
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // リレーション
+  laws WatchListLaw[]
+
+  @@index([userId])
+  @@map("watch_lists")
+}
+
+// 監視リスト-法令の中間テーブル
+model WatchListLaw {
+  watchListId String
+  lawId       String
+  addedAt     DateTime @default(now())
+
+  // リレーション
+  watchList WatchList @relation(fields: [watchListId], references: [id], onDelete: Cascade)
+  law       Law       @relation(fields: [lawId], references: [id], onDelete: Cascade)
+
+  @@id([watchListId, lawId])
+  @@map("watch_list_laws")
+}
+
+// 法令変更通知エンティティ
+model Notification {
+  id          String    @id @default(uuid())
+  lawId       String    // 対象法令ID
+  userId      String    // 通知対象ユーザーID
+  changeType  String    // 変更種別 (content_updated, status_changed, abolished)
+  title       String    // 通知タイトル
+  description String    // 通知説明
+  isRead      Boolean   @default(false) // 既読フラグ
+  detectedAt  DateTime  // 検知日時
+  readAt      DateTime? // 読了日時
+
+  // リレーション
+  law Law @relation(fields: [lawId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([lawId])
+  @@map("notifications")
+}
+
+// ユーザーエンティティ（将来の拡張用）
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// 法令変更履歴（将来の拡張用）
+model LawChangeHistory {
+  id             String   @id @default(uuid())
+  lawId          String   // 対象法令ID
+  changeType     String   // 変更種別
+  changeDetails  String?  // 変更詳細（JSON形式で保存）
+  previousValue  String?  // 変更前の値
+  newValue       String?  // 変更後の値
+  detectedAt     DateTime // 検知日時
+  createdAt      DateTime @default(now())
+
+  @@index([lawId])
+  @@map("law_change_histories")
+}
