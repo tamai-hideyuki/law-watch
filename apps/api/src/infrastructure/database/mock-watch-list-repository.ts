@@ -34,4 +34,8 @@ export class MockWatchListRepository implements WatchListRepository {
   async findAll(): Promise<WatchList[]> {
     return Array.from(this.watchLists.values()).map(watchList => ({ ...watchList }))
   }
+
+  async delete(id: string): Promise<void> {
+    this.watchLists.delete(id)
+  }
 }
