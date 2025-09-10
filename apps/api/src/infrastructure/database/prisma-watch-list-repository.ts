@@ -27,13 +27,13 @@ export class PrismaWatchListRepository implements WatchListRepository {
     })
 
     // 法令の関連付けも更新
-    if (watchList.lawIds.length > 0) {
-      // 既存の関連を削除
-      await this.prisma.watchListLaw.deleteMany({
-        where: { watchListId: watchList.id }
-      })
+    // 既存の関連を削除
+    await this.prisma.watchListLaw.deleteMany({
+      where: { watchListId: watchList.id }
+    })
 
-      // 新しい関連を作成
+    // 新しい関連を作成（空配列の場合は何もしない）
+    if (watchList.lawIds.length > 0) {
       await this.prisma.watchListLaw.createMany({
         data: watchList.lawIds.map(lawId => ({
           watchListId: watchList.id,
