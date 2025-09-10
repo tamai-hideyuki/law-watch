@@ -8,6 +8,7 @@ import { RemoveLawFromWatchListUseCase } from '../../application/usecases/remove
 import { NotificationRepository } from '../../application/ports/notification-repository'
 import { DetectLawChangesUseCase } from '../../application/usecases/detect-law-changes'
 import { SendNotificationUseCase } from '../../application/usecases/send-notification'
+import { EmailService } from '../../infrastructure/notification/email-service'
 import { EGovApi } from '../../application/ports/e-gov-api'
 
 export const createMonitoringApp = (
@@ -211,23 +212,9 @@ export const createMonitoringApp = (
   // 変更検知実行
   app.post('/monitoring/detect-changes', async (c) => {
     try {
-      // MockEmailServiceを使用（環境変数チェックをスキップ）
-      const mockEmailService = {
-        sendLawChangeNotification: async (toEmail: string, notification: any) => {
-          console.log('📧 Sending notification email:', {
-            to: toEmail,
-            subject: `【法改正通知】${notification.title}`,
-            lawId: notification.lawId,
-            detectedAt: notification.detectedAt
-          })
-          return {
-            success: true,
-            messageId: `mock-${Date.now()}`
-          }
-        }
-      }
-      
-      const sendNotificationUseCase = new SendNotificationUseCase(mockEmailService as any)
+      // 実際のEmailServiceを使用（Ethereal Email）
+      const emailService = new EmailService()
+      const sendNotificationUseCase = new SendNotificationUseCase(emailService)
       
       const detectChangesUseCase = new DetectLawChangesUseCase(
         watchListRepository,

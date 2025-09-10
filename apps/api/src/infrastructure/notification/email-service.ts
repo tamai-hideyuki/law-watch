@@ -1,3 +1,5 @@
+import nodemailer from 'nodemailer'
+
 export interface LawChangeNotification {
     title: string
     description: string
@@ -12,32 +14,23 @@ export interface LawChangeNotification {
   }
   
   export class EmailService {
-    private smtpConfig: {
-      host: string
-      port: number
-      user: string
-      pass: string
-    }
+    private transporter: any
   
-    constructor() {
-      this.smtpConfig = {
-        host: process.env.SMTP_HOST || 'localhost',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        user: process.env.SMTP_USER || '',
-        pass: process.env.SMTP_PASS || ''
-      }
-  
-      this.validateConfig()
-    }
-  
-    private validateConfig(): void {
-      if (!process.env.NOTIFICATION_EMAIL_FROM) {
-        throw new Error('NOTIFICATION_EMAIL_FROM environment variable is not set')
-      }
+    async initialize() {
+      // Ethereal用テストアカウント自動作成
+      const testAccount = await nodemailer.createTestAccount()
       
-      if (!this.smtpConfig.host || !this.smtpConfig.user || !this.smtpConfig.pass) {
-        throw new Error('SMTP configuration is incomplete')
-      }
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass
+        }
+      })
+      
+      console.log('📧 Ethereal Email initialized with account:', testAccount.user)
     }
   
     async sendLawChangeNotification(
@@ -45,24 +38,28 @@ export interface LawChangeNotification {
       notification: LawChangeNotification
     ): Promise<EmailSendResult> {
       try {
+        // 初期化されていない場合は初期化
+        if (!this.transporter) {
+          await this.initialize()
+        }
+        
         // メールアドレスのバリデーション
         this.validateEmail(toEmail)
         
-        // メール内容の構築
-        const subject = `【法改正通知】${notification.title}`
-        const htmlContent = this.buildEmailContent(notification)
-        
-        // 実際のメール送信処理（ここではモック実装）
-        const messageId = await this.sendEmail({
-          from: process.env.NOTIFICATION_EMAIL_FROM!,
+        // メール送信
+        const info = await this.transporter.sendMail({
+          from: process.env.NOTIFICATION_EMAIL_FROM || 'noreply@lawwatch.com',
           to: toEmail,
-          subject,
-          html: htmlContent
+          subject: `【法改正通知】${notification.title}`,
+          html: this.buildEmailContent(notification)
         })
+        
+        console.log('📧 Email sent:', info.messageId)
+        console.log('🔗 Preview URL:', nodemailer.getTestMessageUrl(info))
   
         return {
           success: true,
-          messageId
+          messageId: info.messageId
         }
       } catch (error) {
         return {
@@ -95,22 +92,5 @@ export interface LawChangeNotification {
       `
     }
   
-    private async sendEmail(emailData: {
-      from: string
-      to: string
-      subject: string
-      html: string
-    }): Promise<string> {
-      // 実際のSMTP送信処理はここに実装
-      // 現在はモック実装として、常に成功を返す
-      console.log('Sending email:', {
-        from: emailData.from,
-        to: emailData.to,
-        subject: emailData.subject
-      })
-      
-      // モック用のメッセージIDを生成
-      return `mock-${Date.now()}`
-    }
   }
   

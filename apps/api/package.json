@@ -4,10 +4,12 @@
     "start": "tsx src/main.ts"
   },
   "devDependencies": {
+    "@types/nodemailer": "^7.0.1",
     "tsx": "^4.20.5"
   },
   "dependencies": {
     "dotenv": "^17.2.2",
-    "hono": "^4.9.6"
+    "hono": "^4.9.6",
+    "nodemailer": "^7.0.6"
   }
 }
