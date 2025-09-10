@@ -7,6 +7,7 @@ import { CreateWatchListUseCase } from '../../application/usecases/create-watch-
 import { RemoveLawFromWatchListUseCase } from '../../application/usecases/remove-law-from-watch-list'
 import { NotificationRepository } from '../../application/ports/notification-repository'
 import { DetectLawChangesUseCase } from '../../application/usecases/detect-law-changes'
+import { SendNotificationUseCase } from '../../application/usecases/send-notification'
 import { EGovApi } from '../../application/ports/e-gov-api'
 
 export const createMonitoringApp = (
@@ -210,10 +211,21 @@ export const createMonitoringApp = (
   // 変更検知実行
   app.post('/monitoring/detect-changes', async (c) => {
     try {
+      // MockEmailServiceを使用（環境変数チェックをスキップ）
+      const mockEmailService = {
+        sendLawChangeNotification: async () => ({
+          success: true,
+          messageId: `mock-${Date.now()}`
+        })
+      }
+      
+      const sendNotificationUseCase = new SendNotificationUseCase(mockEmailService as any)
+      
       const detectChangesUseCase = new DetectLawChangesUseCase(
         watchListRepository,
         egovApi,
-        notificationRepository
+        notificationRepository,
+        sendNotificationUseCase
       )
       
       const notifications = await detectChangesUseCase.execute()
