@@ -15,8 +15,9 @@ law-watch/
 ```
 
 ### 技術スタック
-- **バックエンド**: Node.js + Hono + TypeScript
+- **バックエンド**: Node.js + Hono + TypeScript + Nodemailer
 - **フロントエンド**: Next.js 14 + React + TypeScript + Tailwind CSS  
+- **メール送信**: Nodemailer + Ethereal Email（開発）/ Gmail SMTP（本番）
 - **テスト**: Vitest
 - **パッケージ管理**: pnpm ワークスペース
 
@@ -63,7 +64,14 @@ law-watch/
 - **機能**: ユーザーごとの変更通知一覧
 - **データ**: 通知ID, 法令ID, 変更種別, タイトル, 説明, 検知日時, 読了状態
 
-#### 4.3 テスト用機能
+#### 4.3 メール通知システム
+- **実装**: SendNotificationUseCase + EmailService
+- **開発環境**: Ethereal Email（自動テストアカウント作成）
+- **本番環境**: Gmail SMTP / SendGrid対応
+- **機能**: 法令変更検知時の自動メール送信
+- **プレビュー**: Ethereal EmailのWeb UIでメール内容確認可能
+
+#### 4.4 テスト用機能
 - **エンドポイント**: `POST /monitoring/simulate-change`
 - **機能**: 法令変更をシミュレーション（テスト・デモ用）
 
@@ -81,6 +89,7 @@ law-watch/
   - `AddLawToWatchListUseCase`: 法令監視追加
   - `RemoveLawFromWatchListUseCase`: 法令監視削除
   - `DetectLawChangesUseCase`: 法令変更検知
+  - `SendNotificationUseCase`: メール通知送信
 
 ### Infrastructure Layer（インフラ層）
 - **データアクセス**: 
@@ -88,6 +97,8 @@ law-watch/
   - `MockNotificationRepository`: 通知データ永続化
 - **外部API**: 
   - `MockEGovClient`: e-Gov API モック実装
+- **メール送信**:
+  - `EmailService`: Nodemailer統合、Ethereal/Gmail SMTP対応
 
 ### Presentation Layer（プレゼンテーション層）
 - **API**: RESTful エンドポイント, CORS設定
@@ -181,6 +192,15 @@ components/
 
 ## 開発・運用コマンド
 
+### パッケージインストール
+```bash
+# プロジェクト全体の依存関係インストール
+pnpm install
+
+# APIサーバーのみ（Nodemailerなど）
+cd apps/api && pnpm install
+```
+
 ### 開発サーバー起動
 ```bash
 # 全体起動
@@ -212,11 +232,39 @@ curl -X POST http://localhost:3000/monitoring/watch-list \
   -H "Content-Type: application/json" \
   -d '{"userId": "user-001", "name": "労働法監視"}'
 
-# 変更検知実行
+# 法令を監視リストに追加
+curl -X POST http://localhost:3000/monitoring/watch \
+  -H "Content-Type: application/json" \
+  -d '{"watchListId": "your-watch-list-id", "lawId": "322AC0000000049"}'
+
+# 変更シミュレーション（テスト用）
+curl -X POST http://localhost:3000/monitoring/simulate-change
+
+# 変更検知実行（メール送信付き）
 curl -X POST http://localhost:3000/monitoring/detect-changes
 
-# 変更シミュレーション
-curl -X POST http://localhost:3000/monitoring/simulate-change
+# 通知一覧取得
+curl http://localhost:3000/monitoring/notifications/user-001
+```
+
+## メール通知設定
+
+### 開発環境（Ethereal Email）
+```bash
+# 自動的にテストアカウントが作成されます
+# 送信されたメールはWeb UIで確認可能
+# https://ethereal.email/message/[メッセージID]
+```
+
+### 本番環境（Gmail SMTP）
+```bash
+# .envファイルに設定
+export NOTIFICATION_EMAIL_FROM=noreply@yourdomain.com
+export NOTIFICATION_EMAIL_TO=admin@yourdomain.com
+export SMTP_HOST=smtp.gmail.com
+export SMTP_PORT=587
+export SMTP_USER=your-email@gmail.com
+export SMTP_PASS=your-app-password
 ```
 
 ## 現在の制限事項・TODO
@@ -228,8 +276,13 @@ curl -X POST http://localhost:3000/monitoring/simulate-change
 
 ### 技術的課題
 1. **スケジューラー未実装** - 変更検知の定期実行なし
-2. **通知配信機能なし** - メール・プッシュ通知未実装
-3. **ユーザー管理機能なし** - 認証・認可システム未実装
+2. **ユーザー管理機能なし** - 認証・認可システム未実装
+
+### 実装済み機能
+1. ✅ **メール通知システム** - Ethereal Email（開発）/ Gmail SMTP（本番）対応
+2. ✅ **変更検知・通知システム** - 完全動作確認済み
+3. ✅ **監視リスト管理** - CRUD操作完備
+4. ✅ **法令検索・一覧表示** - フロントエンド統合済み
 
 ### 将来の拡張ポイント
 1. **実際のe-Gov API連携**
@@ -238,9 +291,11 @@ curl -X POST http://localhost:3000/monitoring/simulate-change
 4. **リアルタイム通知（WebSocket）**
 5. **変更内容の詳細比較機能**
 6. **通知設定のカスタマイズ**
+7. **定期実行スケジューラー（cron）**
 
 ## 最終更新
-- **日付**: 2025-09-07
-- **状態**: 法令変更検知・通知システム完全実装完了
+- **日付**: 2025-09-10
+- **状態**: メール通知システム統合完了
+- **実装**: Ethereal Email による開発環境メール送信確認済み
 - **テスト**: 全13テスト通過
 - **機能**: コア機能すべて実装・動作確認済み
