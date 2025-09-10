@@ -5,4 +5,5 @@ export interface WatchListRepository {
   findById(id: string): Promise<WatchList | null>
   findByUserId(userId: string): Promise<WatchList[]>
   findAll(): Promise<WatchList[]>
+  delete(id: string): Promise<void>
 }
