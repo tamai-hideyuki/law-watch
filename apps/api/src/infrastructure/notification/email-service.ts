@@ -1,4 +1,5 @@
-import nodemailer from 'nodemailer'
+import nodemailer, { Transporter } from 'nodemailer'
+import { createLogger } from '../logging/logger'
 
 export interface LawChangeNotification {
     title: string
@@ -14,7 +15,8 @@ export interface LawChangeNotification {
   }
   
   export class EmailService {
-    private transporter: any
+    private transporter: Transporter | null = null
+    private readonly logger = createLogger('EmailService')
   
     async initialize() {
       // Ethereal用テストアカウント自動作成
@@ -30,7 +32,7 @@ export interface LawChangeNotification {
         }
       })
       
-      console.log('📧 Ethereal Email initialized with account:', testAccount.user)
+      this.logger.info('Ethereal Email initialized', { account: testAccount.user })
     }
   
     async sendLawChangeNotification(
@@ -46,6 +48,10 @@ export interface LawChangeNotification {
         // メールアドレスのバリデーション
         this.validateEmail(toEmail)
         
+        if (!this.transporter) {
+          throw new Error('Email transporter not initialized')
+        }
+        
         // メール送信
         const info = await this.transporter.sendMail({
           from: process.env.NOTIFICATION_EMAIL_FROM || 'noreply@lawwatch.com',
@@ -54,8 +60,11 @@ export interface LawChangeNotification {
           html: this.buildEmailContent(notification)
         })
         
-        console.log('📧 Email sent:', info.messageId)
-        console.log('🔗 Preview URL:', nodemailer.getTestMessageUrl(info))
+        this.logger.info('Email sent successfully', {
+          messageId: info.messageId,
+          previewUrl: nodemailer.getTestMessageUrl(info),
+          recipient: toEmail
+        })
   
         return {
           success: true,

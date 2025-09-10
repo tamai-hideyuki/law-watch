@@ -4,9 +4,11 @@ import { createSimpleSearchQuery } from '../../domain/law'
 import type { LawRepository } from '../../application/ports/law-repository'
 import type { EGovApi } from '../../application/ports/e-gov-api'
 import { cors } from 'hono/cors'
+import { createLogger } from '../../infrastructure/logging/logger'
 
 export const createSearchApp = (lawRepository: LawRepository, egovApi: EGovApi) => {
     const app = new Hono()
+    const logger = createLogger('SearchAPI')
 
     app.use('*', cors({
       origin: ['http://localhost:3001'],
@@ -17,7 +19,10 @@ export const createSearchApp = (lawRepository: LawRepository, egovApi: EGovApi) 
     const searchUseCase = new SearchLawsUseCase(lawRepository, egovApi)
   
     app.onError((err, c) => {
-      console.error(err)
+      logger.error('Search API error', { 
+        error: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined
+      })
       return c.json({ error: 'Internal server error' }, 500)
     })
   

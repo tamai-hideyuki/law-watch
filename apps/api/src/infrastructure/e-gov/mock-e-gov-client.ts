@@ -1,5 +1,5 @@
 import { EGovApi, EGovSearchResponse, EGovLawData } from '../../application/ports/e-gov-api'
-import { SearchQuery, LawId } from '../../domain/law'
+import { SimpleSearchQuery as SearchQuery, LawId } from '../../domain/law'
 
 
 

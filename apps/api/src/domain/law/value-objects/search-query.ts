@@ -24,11 +24,12 @@ export const createSimpleSearchQuery = (keyword: string): SearchQuery => {
   return createSearchQuery(keyword)
 }
 
-export const isValidSearchQuery = (query: any): query is SearchQuery => {
+export const isValidSearchQuery = (query: unknown): query is SearchQuery => {
   return (
     typeof query === 'object' &&
     query !== null &&
-    typeof query.keyword === 'string' &&
-    query.keyword.trim().length > 0
+    'keyword' in query &&
+    typeof (query as SearchQuery).keyword === 'string' &&
+    (query as SearchQuery).keyword.trim().length > 0
   )
 }

@@ -20,7 +20,8 @@ describe('AddLawToWatchListUseCase', () => {
     mockWatchListRepository = {
       save: mockSave,
       findById: mockFindById,
-      findByUserId: mockFindByUserId
+      findByUserId: mockFindByUserId,
+      findAll: vi.fn()
     }
 
     useCase = new AddLawToWatchListUseCase(mockWatchListRepository)

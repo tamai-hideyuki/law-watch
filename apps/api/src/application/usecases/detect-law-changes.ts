@@ -1,37 +1,49 @@
 import { WatchListRepository } from '../ports/watch-list-repository'
-import { EGovApi } from '../ports/e-gov-api'
+import { EGovApi, EGovLawData } from '../ports/e-gov-api'
 import { NotificationRepository } from '../../application/ports/notification-repository'
 import { SendNotificationUseCase } from './send-notification'
 import { createLawChangeNotification, ChangeType, LawChangeNotification } from '../../domain/monitoring/entities/law-change-notification'
-import { createLawId } from '../../domain/law'
+import { createLawId, LawId } from '../../domain/law'
+import { createLogger } from '../../infrastructure/logging/logger'
 
 export class DetectLawChangesUseCase {
+  private readonly logger = createLogger('DetectLawChangesUseCase')
+
   constructor(
     private readonly watchListRepository: WatchListRepository,
     private readonly egovApi: EGovApi,
     private readonly notificationRepository: NotificationRepository,
-    private readonly sendNotificationUseCase: SendNotificationUseCase // 追加
+    private readonly sendNotificationUseCase: SendNotificationUseCase
   ) {}
 
   async execute(): Promise<LawChangeNotification[]> {
     // 1. すべてのウォッチリストを取得
     const watchLists = await this.watchListRepository.findAll()
-    console.log(`Found ${watchLists.length} watch lists`)
+    this.logger.info('Watch lists retrieved', { count: watchLists.length })
     
     const notifications: LawChangeNotification[] = []
 
     // 2. 各ウォッチリストの法令をチェック
     for (const watchList of watchLists) {
-      console.log(`Checking watch list: ${watchList.name} with ${watchList.lawIds.length} laws`)
+      this.logger.debug('Checking watch list', { 
+        name: watchList.name, 
+        lawCount: watchList.lawIds.length 
+      })
       for (const lawId of watchList.lawIds) {
         try {
           // 3. 法令の最新情報を取得
           const currentLawData = await this.egovApi.getLawDetail(lawId)
-          console.log(`Retrieved law data for ${lawId}: ${currentLawData.name}`)
+          this.logger.debug('Law data retrieved', { 
+            lawId: lawId, 
+            lawName: currentLawData.name 
+          })
           
           // 4. 変更を検出（簡易的な実装）
           const hasChanges = await this.detectChanges(lawId, currentLawData)
-          console.log(`Change detection for ${lawId}: ${hasChanges}`)
+          this.logger.debug('Change detection completed', { 
+            lawId: lawId, 
+            hasChanges 
+          })
           
           if (hasChanges) {
             // 5. 通知を作成
@@ -53,7 +65,10 @@ export class DetectLawChangesUseCase {
             notifications.push(notification)
           }
         } catch (error) {
-          console.error(`Failed to check law ${lawId}:`, error)
+          this.logger.error('Law check failed', { 
+            lawId: lawId, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          })
           // エラーが発生しても他の法令のチェックは続行
         }
       }
@@ -62,7 +77,7 @@ export class DetectLawChangesUseCase {
     return notifications
   }
 
-  private async detectChanges(lawId: any, currentLawData: any): Promise<boolean> {
+  private async detectChanges(lawId: LawId, currentLawData: EGovLawData): Promise<boolean> {
     // 名前に「改正版」が含まれている場合は変更ありとみなす
     if (currentLawData.name.includes('改正版') || currentLawData.name.includes('令和7年改正版')) {
       return true
