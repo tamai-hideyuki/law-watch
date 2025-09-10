@@ -7,6 +7,8 @@ import { createMonitoringApp } from './presentation/api/monitoring'
 import { MockEGovClient } from './infrastructure/e-gov/mock-e-gov-client'
 import { MockWatchListRepository } from './infrastructure/database/mock-watch-list-repository'
 import { MockNotificationRepository } from './infrastructure/database/mock-notification-repository'
+import { EmailService } from './infrastructure/notification/email-service'
+import { SendNotificationUseCase } from './application/usecases/send-notification'
 
 const mockLawRepository = {
   save: async () => {},
@@ -17,6 +19,8 @@ const mockLawRepository = {
 const egovClient = new MockEGovClient()
 const mockWatchListRepository = new MockWatchListRepository()
 const mockNotificationRepository = new MockNotificationRepository()
+const emailService = new EmailService()
+const sendNotificationUseCase = new SendNotificationUseCase(emailService)
 
 // メインアプリを作成
 const app = new Hono()
