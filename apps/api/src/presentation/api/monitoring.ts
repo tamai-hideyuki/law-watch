@@ -213,10 +213,18 @@ export const createMonitoringApp = (
     try {
       // MockEmailServiceを使用（環境変数チェックをスキップ）
       const mockEmailService = {
-        sendLawChangeNotification: async () => ({
-          success: true,
-          messageId: `mock-${Date.now()}`
-        })
+        sendLawChangeNotification: async (toEmail: string, notification: any) => {
+          console.log('📧 Sending notification email:', {
+            to: toEmail,
+            subject: `【法改正通知】${notification.title}`,
+            lawId: notification.lawId,
+            detectedAt: notification.detectedAt
+          })
+          return {
+            success: true,
+            messageId: `mock-${Date.now()}`
+          }
+        }
       }
       
       const sendNotificationUseCase = new SendNotificationUseCase(mockEmailService as any)
