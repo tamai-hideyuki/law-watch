@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { createLogger } from '../../infrastructure/logging/logger'
 import { AddLawToWatchListUseCase } from '../../application/usecases/add-law-to-watch-list'
 import { createLawId } from '../../domain/law'
 import type { WatchListRepository } from '../../application/ports/watch-list-repository'
@@ -17,6 +18,7 @@ export const createMonitoringApp = (
   egovApi: EGovApi
 ) => {
   const app = new Hono()
+  const logger = createLogger('MonitoringAPI')
 
   // CORS設定
   app.use('*', cors({
@@ -27,7 +29,10 @@ export const createMonitoringApp = (
 
   // エラーハンドリング
   app.onError((err, c) => {
-    console.error('Monitoring API Error:', err)
+    logger.error('Monitoring API error', { 
+      error: err instanceof Error ? err.message : 'Unknown error',
+      stack: err instanceof Error ? err.stack : undefined
+    })
     return c.json({ error: 'Internal server error' }, 500)
   })
 

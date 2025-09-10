@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { createLogger } from '../logging/logger'
 
 const mockLawData = [
   // 労働関連
@@ -80,8 +81,10 @@ const mockLawData = [
   }
 ]
 
+const logger = createLogger('SeedData')
+
 export async function seedLaws(prisma: PrismaClient) {
-  console.log('🌱 Seeding law data...')
+  logger.info('Starting law data seeding')
   
   for (const law of mockLawData) {
     await prisma.law.upsert({
@@ -105,7 +108,7 @@ export async function seedLaws(prisma: PrismaClient) {
     })
   }
   
-  console.log(`✅ Seeded ${mockLawData.length} laws`)
+  logger.info('Law data seeding completed', { count: mockLawData.length })
 }
 
 // スクリプトとして直接実行された場合の処理
@@ -114,7 +117,7 @@ if (require.main === module) {
   
   seedLaws(prisma)
     .catch((e) => {
-      console.error('❌ Seeding failed:', e)
+      logger.error('Seeding failed', { error: e instanceof Error ? e.message : 'Unknown error' })
       process.exit(1)
     })
     .finally(async () => {

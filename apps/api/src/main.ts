@@ -12,8 +12,10 @@ import { PrismaNotificationRepository } from './infrastructure/database/prisma-n
 import { PrismaLawRepository } from './infrastructure/database/prisma-law-repository'
 import { EmailService } from './infrastructure/notification/email-service'
 import { SendNotificationUseCase } from './application/usecases/send-notification'
+import { createLogger } from './infrastructure/logging/logger'
 
-// Prismaクライアントを初期化
+// LoggerとPrismaクライアントを初期化
+const logger = createLogger('Main')
 const prisma = new PrismaClient()
 
 // PrismaRepositoryを使用
@@ -44,12 +46,15 @@ app.route('/', lawsApp)
 app.route('/', monitoringApp)
 
 const port = 3000
-console.log(`🔥 Law Watch API running on http://localhost:${port}`)
-console.log(`🗄️  Database: ${process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/law_watch_dev'}`)
+logger.info('Law Watch API started', {
+  port,
+  url: `http://localhost:${port}`,
+  database: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/law_watch_dev'
+})
 
 // グレースフルシャットダウン
 process.on('SIGINT', async () => {
-  console.log('🔌 Disconnecting from database...')
+  logger.info('Graceful shutdown initiated')
   await prisma.$disconnect()
   process.exit(0)
 })
