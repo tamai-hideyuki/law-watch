@@ -1,12 +1,17 @@
 {
+  "name": "api",
+  "version": "1.0.0",
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "start": "tsx src/main.ts"
   },
   "devDependencies": {
+    "@types/nodemailer": "^7.0.1",
     "tsx": "^4.20.5"
   },
   "dependencies": {
-    "hono": "^4.9.6"
+    "dotenv": "^17.2.2",
+    "hono": "^4.9.6",
+    "nodemailer": "^7.0.6"
   }
 }

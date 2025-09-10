@@ -1,6 +1,7 @@
 import { WatchListRepository } from '../ports/watch-list-repository'
 import { EGovApi } from '../ports/e-gov-api'
 import { NotificationRepository } from '../../application/ports/notification-repository'
+import { SendNotificationUseCase } from './send-notification'
 import { createLawChangeNotification, ChangeType, LawChangeNotification } from '../../domain/monitoring/entities/law-change-notification'
 import { createLawId } from '../../domain/law'
 
@@ -8,10 +9,10 @@ export class DetectLawChangesUseCase {
   constructor(
     private readonly watchListRepository: WatchListRepository,
     private readonly egovApi: EGovApi,
-    private readonly notificationRepository: NotificationRepository
+    private readonly notificationRepository: NotificationRepository,
+    private readonly sendNotificationUseCase: SendNotificationUseCase // 追加
   ) {}
 
-  
   async execute(): Promise<LawChangeNotification[]> {
     // 1. すべてのウォッチリストを取得
     const watchLists = await this.watchListRepository.findAll()
@@ -45,6 +46,10 @@ export class DetectLawChangesUseCase {
 
             // 6. 通知を保存
             await this.notificationRepository.save(notification)
+            
+            // 7. メール通知を送信
+            await this.sendNotificationUseCase.execute(notification)
+            
             notifications.push(notification)
           }
         } catch (error) {

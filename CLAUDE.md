@@ -15,10 +15,35 @@ law-watch/
 ```
 
 ### 技術スタック
-- **バックエンド**: Node.js + Hono + TypeScript
+- **バックエンド**: Node.js + Hono + TypeScript + Nodemailer
 - **フロントエンド**: Next.js 14 + React + TypeScript + Tailwind CSS  
+- **メール送信**: Nodemailer + Ethereal Email（開発）/ Gmail SMTP（本番）
 - **テスト**: Vitest
 - **パッケージ管理**: pnpm ワークスペース
+
+## API エンドポイント一覧
+
+### 検索・一覧系
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| GET | `/search?q={keyword}` | 法令をキーワード検索 |
+| GET | `/laws` | 全法令一覧を取得 |
+
+### 監視リスト管理
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| POST | `/monitoring/watch-list` | 新規監視リスト作成 |
+| GET | `/monitoring/watch/{userId}` | ユーザーの監視リスト一覧取得 |
+| GET | `/monitoring/watch/detail/{watchListId}` | 監視リスト詳細取得 |
+| POST | `/monitoring/watch` | 法令を監視リストに追加 |
+| DELETE | `/monitoring/watch/{watchListId}/{lawId}` | 法令を監視リストから削除 |
+
+### 通知・検知系
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| POST | `/monitoring/detect-changes` | 法令変更検知実行（メール送信付き） |
+| GET | `/monitoring/notifications/{userId}` | ユーザーの通知一覧取得 |
+| POST | `/monitoring/simulate-change` | 法令変更シミュレーション（テスト用） |
 
 ## 実装済み機能一覧
 
@@ -63,7 +88,14 @@ law-watch/
 - **機能**: ユーザーごとの変更通知一覧
 - **データ**: 通知ID, 法令ID, 変更種別, タイトル, 説明, 検知日時, 読了状態
 
-#### 4.3 テスト用機能
+#### 4.3 メール通知システム
+- **実装**: SendNotificationUseCase + EmailService
+- **開発環境**: Ethereal Email（自動テストアカウント作成）
+- **本番環境**: Gmail SMTP / SendGrid対応
+- **機能**: 法令変更検知時の自動メール送信
+- **プレビュー**: Ethereal EmailのWeb UIでメール内容確認可能
+
+#### 4.4 テスト用機能
 - **エンドポイント**: `POST /monitoring/simulate-change`
 - **機能**: 法令変更をシミュレーション（テスト・デモ用）
 
@@ -81,6 +113,7 @@ law-watch/
   - `AddLawToWatchListUseCase`: 法令監視追加
   - `RemoveLawFromWatchListUseCase`: 法令監視削除
   - `DetectLawChangesUseCase`: 法令変更検知
+  - `SendNotificationUseCase`: メール通知送信
 
 ### Infrastructure Layer（インフラ層）
 - **データアクセス**: 
@@ -88,6 +121,8 @@ law-watch/
   - `MockNotificationRepository`: 通知データ永続化
 - **外部API**: 
   - `MockEGovClient`: e-Gov API モック実装
+- **メール送信**:
+  - `EmailService`: Nodemailer統合、Ethereal/Gmail SMTP対応
 
 ### Presentation Layer（プレゼンテーション層）
 - **API**: RESTful エンドポイント, CORS設定
@@ -96,22 +131,35 @@ law-watch/
 ## フロントエンド構成
 
 ### ページ構成
-1. **検索ページ** (`/`) - 法令検索・監視機能
-2. **全法令一覧** (`/laws`) - 全法令表示・監視機能  
-3. **監視ダッシュボード** (`/monitoring`) - 監視中法令管理
+| パス | ページ名 | 機能 |
+|------|---------|------|
+| `/` | 検索ページ | キーワード検索、検索結果から監視追加 |
+| `/laws` | 全法令一覧 | 全法令表示、個別監視ボタン |
+| `/monitoring` | 監視ダッシュボード | 監視中法令管理、削除機能 |
+
+### UIコンポーネント機能
+- **検索バー**: リアルタイム検索、エンターキーでの検索実行
+- **法令カード**: 法令情報表示、監視ボタン統合
+- **監視ボタン**: ワンクリックで監視追加/削除、状態の即時反映
+- **ローディング表示**: 非同期処理中のスピナー表示
+- **エラーハンドリング**: APIエラー時の適切なメッセージ表示
 
 ### コンポーネント構造（Atomic Design）
 ```
 components/
-├── atoms/          # 基本コンポーネント
-├── molecules/      # 複合コンポーネント
-├── organisms/      # 複雑な機能単位
-└── templates/      # ページテンプレート
+├── atoms/          # ボタン、入力フィールド等
+├── molecules/      # 検索バー、法令カード等
+├── organisms/      # 法令リスト、監視リスト等
+└── templates/      # ページレイアウト
 ```
 
 ### 状態管理
-- **カスタムフック**: `use-search-laws`, `use-all-laws`, `use-watch-lists`
+- **カスタムフック**: 
+  - `use-search-laws`: 法令検索状態管理
+  - `use-all-laws`: 全法令一覧状態管理
+  - `use-watch-lists`: 監視リスト状態管理
 - **API統合**: 型安全なAPIクライアント実装
+- **リアルタイム更新**: 監視状態の即座な画面反映
 
 ## テスト構成
 
@@ -181,6 +229,15 @@ components/
 
 ## 開発・運用コマンド
 
+### パッケージインストール
+```bash
+# プロジェクト全体の依存関係インストール
+pnpm install
+
+# APIサーバーのみ（Nodemailerなど）
+cd apps/api && pnpm install
+```
+
 ### 開発サーバー起動
 ```bash
 # 全体起動
@@ -212,11 +269,80 @@ curl -X POST http://localhost:3000/monitoring/watch-list \
   -H "Content-Type: application/json" \
   -d '{"userId": "user-001", "name": "労働法監視"}'
 
-# 変更検知実行
+# 法令を監視リストに追加
+curl -X POST http://localhost:3000/monitoring/watch \
+  -H "Content-Type: application/json" \
+  -d '{"watchListId": "your-watch-list-id", "lawId": "322AC0000000049"}'
+
+# 変更シミュレーション（テスト用）
+curl -X POST http://localhost:3000/monitoring/simulate-change
+
+# 変更検知実行（メール送信付き）
 curl -X POST http://localhost:3000/monitoring/detect-changes
 
-# 変更シミュレーション
+# 通知一覧取得
+curl http://localhost:3000/monitoring/notifications/user-001
+```
+
+## メール通知設定
+
+### 開発環境（Ethereal Email）
+```bash
+# 自動的にテストアカウントが作成されます
+# 送信されたメールはWeb UIで確認可能
+# https://ethereal.email/message/[メッセージID]
+```
+
+### メール送信デモンストレーション手順
+
+#### 1. 監視リスト作成
+```bash
+curl -X POST http://localhost:3000/monitoring/watch-list \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"user-001","name":"テスト用ウォッチリスト"}'
+```
+
+#### 2. 法令を監視リストに追加
+```bash
+# レスポンスから取得したwatchListIdを使用
+curl -X POST http://localhost:3000/monitoring/watch \
+  -H "Content-Type: application/json" \
+  -d '{"watchListId":"[取得したID]","lawId":"322AC0000000049"}'
+```
+
+#### 3. 法令変更をシミュレート
+```bash
 curl -X POST http://localhost:3000/monitoring/simulate-change
+```
+
+#### 4. 変更検知を実行（メール送信）
+```bash
+curl -X POST http://localhost:3000/monitoring/detect-changes
+```
+
+#### 5. メール内容の確認
+サーバーログに表示される以下の情報を確認：
+```
+📧 Ethereal Email initialized with account: xxx@ethereal.email
+📧 Email sent: <message-id>
+🔗 Preview URL: https://ethereal.email/message/...
+```
+
+**Preview URLをブラウザで開くと**:
+- HTML形式の法改正通知メールを閲覧可能
+- 件名: 【法改正通知】労働基準法（令和7年改正版）に変更が検出されました
+- 宛先: admin@law-watch.example.com（または.envで設定したアドレス）
+- 実際にはメールは送信されないが、本番環境と同じ内容を確認可能
+
+### 本番環境（Gmail SMTP）
+```bash
+# .envファイルに設定
+export NOTIFICATION_EMAIL_FROM=noreply@yourdomain.com
+export NOTIFICATION_EMAIL_TO=admin@yourdomain.com
+export SMTP_HOST=smtp.gmail.com
+export SMTP_PORT=587
+export SMTP_USER=your-email@gmail.com
+export SMTP_PASS=your-app-password
 ```
 
 ## 現在の制限事項・TODO
@@ -228,19 +354,61 @@ curl -X POST http://localhost:3000/monitoring/simulate-change
 
 ### 技術的課題
 1. **スケジューラー未実装** - 変更検知の定期実行なし
-2. **通知配信機能なし** - メール・プッシュ通知未実装
-3. **ユーザー管理機能なし** - 認証・認可システム未実装
+2. **ユーザー管理機能なし** - 認証・認可システム未実装
 
-### 将来の拡張ポイント
+### 実装済み機能
+1. ✅ **メール通知システム** - Ethereal Email（開発）/ Gmail SMTP（本番）対応
+2. ✅ **変更検知・通知システム** - 完全動作確認済み
+3. ✅ **監視リスト管理** - CRUD操作完備
+4. ✅ **法令検索・一覧表示** - フロントエンド統合済み
+
+### トラブルシューティング
+
+### よくある問題と解決方法
+
+#### 1. pnpm dev でAPIが起動しない
+**症状**: `No projects matched the filters`エラー
+**解決方法**: 
+```bash
+# apps/api/package.jsonに"name": "api"が設定されているか確認
+cd apps/api
+cat package.json | grep name
+```
+
+#### 2. ポート競合エラー
+**症状**: `EADDRINUSE: address already in use`
+**解決方法**:
+```bash
+# 使用中のプロセスを確認
+lsof -i :3000
+lsof -i :3001
+# プロセスを終了
+kill -9 [PID]
+```
+
+#### 3. メール送信が動作しない
+**症状**: メールプレビューURLが表示されない
+**確認事項**:
+- Nodemailerがインストールされているか: `cd apps/api && npm list nodemailer`
+- サーバーログにEthereal Email初期化メッセージが表示されているか
+- 監視リストに法令が追加されているか確認
+
+#### 4. CORS エラー
+**症状**: ブラウザコンソールにCORSエラー
+**解決方法**: APIサーバーが起動していることを確認（ポート3000）
+
+## 将来の拡張ポイント
 1. **実際のe-Gov API連携**
 2. **PostgreSQL等による永続化**  
 3. **JWT認証システム**
 4. **リアルタイム通知（WebSocket）**
 5. **変更内容の詳細比較機能**
 6. **通知設定のカスタマイズ**
+7. **定期実行スケジューラー（cron）**
 
 ## 最終更新
-- **日付**: 2025-09-07
-- **状態**: 法令変更検知・通知システム完全実装完了
+- **日付**: 2025-09-10
+- **状態**: メール通知システム統合完了
+- **実装**: Ethereal Email による開発環境メール送信確認済み
 - **テスト**: 全13テスト通過
 - **機能**: コア機能すべて実装・動作確認済み
