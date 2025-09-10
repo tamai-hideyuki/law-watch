@@ -10,9 +10,18 @@ export const isValidLawIdFormat = (value: string): boolean => {
     return false
   }
   
-  // 法令IDのフォーマット: 数字3桁 + AC + 10桁の数字
-  // 例: 322AC0000000049, 324AC0000000100
-  const lawIdPattern = /^[0-9]{3}AC[0-9]{10}$/
+  // 実際のe-Gov APIで使用されている法令IDのフォーマット
+  // 基本構造: 数字3桁 + 文字列
+  // 例:
+  // - 321CONSTITUTION (憲法)
+  // - 106DF0000000065 (太政官布告)
+  // - 117DF1000000032 (太政官布告)
+  // - 122AC0000000034 (法律)
+  // - 132AC1000000040 (法律変形)
+  
+  // 最も柔軟なパターン: 3桁の数字で始まり、その後に文字と数字の組み合わせ
+  const lawIdPattern = /^[0-9]{3}[A-Z0-9]+$/
+  
   return lawIdPattern.test(value)
 }
 

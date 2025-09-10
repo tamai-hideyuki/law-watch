@@ -6,7 +6,10 @@
     "start": "tsx src/main.ts",
     "typecheck": "tsc --project tsconfig.typecheck.json",
     "test:safe": "pnpm typecheck && vitest run",
-    "test:watch:safe": "pnpm typecheck && vitest watch"
+    "test:watch:safe": "pnpm typecheck && vitest watch",
+    "test:real-egov": "tsx scripts/test-real-egov-api.ts",
+    "test:integration": "./scripts/test-api-integration.sh",
+    "test:quick": "./scripts/quick-test.sh"
   },
   "devDependencies": {
     "@types/nodemailer": "^7.0.1",
