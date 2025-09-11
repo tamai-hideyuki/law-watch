@@ -172,4 +172,40 @@ app.post('/scan', async (c) => {
   }
 })
 
+// 最近の変更差分取得（詳細版）
+app.get('/diffs', async (c) => {
+  try {
+    const limit = parseInt(c.req.query('limit') || '10')
+    const result = await lawRegistryRepository.getRecentDiffs(limit)
+
+    if (!result.success) {
+      return errorResponse(c, result.error, 500)
+    }
+
+    const responseData = {
+      diffs: result.data,
+      count: result.data.length,
+      retrievedAt: getJapanTimeFormatted(),
+      timezone: 'Asia/Tokyo (JST)'
+    }
+
+    return successResponse(c, responseData)
+  } catch (error) {
+    console.error('差分取得エラー:', error)
+    return errorResponse(c, '内部サーバーエラー', 500)
+  }
+})
+
+// 特定の差分詳細取得
+app.get('/diffs/:diffId', async (c) => {
+  try {
+    const diffId = c.req.param('diffId')
+    // TODO: 実装時はgetDiffByIdメソッドを追加
+    return errorResponse(c, '機能は実装予定です', 501)
+  } catch (error) {
+    console.error('差分詳細取得エラー:', error)
+    return errorResponse(c, '内部サーバーエラー', 500)
+  }
+})
+
 export default app

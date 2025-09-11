@@ -21,7 +21,7 @@ export const successResponse = <T>(c: Context, data?: T, additionalFields?: Reco
   return c.json(response)
 }
 
-export const errorResponse = (c: Context, message: string, statusCode: 400 | 401 | 403 | 404 | 500 = 500) => {
+export const errorResponse = (c: Context, message: string, statusCode: 400 | 401 | 403 | 404 | 500 | 501 = 500) => {
   const response: ErrorResponse = {
     success: false,
     error: message
