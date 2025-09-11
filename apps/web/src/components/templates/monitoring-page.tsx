@@ -93,10 +93,23 @@ export const MonitoringPage = () => {
 
     setLoading(true)
     try {
+      // 監視リストから削除
       const listsWithLaw = watchLists.filter(list => list.lawIds.includes(law.id))
-      await Promise.all(
-        listsWithLaw.map(list => removeLawFromWatchList(list.id, law.id))
-      )
+      if (listsWithLaw.length > 0) {
+        await Promise.all(
+          listsWithLaw.map(list => removeLawFromWatchList(list.id, law.id))
+        )
+      }
+      
+      // 法令データ自体も削除（監視リストに含まれていない場合も削除可能）
+      const response = await fetch(`http://localhost:3000/laws/${law.id}`, {
+        method: 'DELETE',
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete law')
+      }
+      
       await loadData() // データを再読み込み
       alert('法令が監視対象から削除されました')
     } catch (err) {
