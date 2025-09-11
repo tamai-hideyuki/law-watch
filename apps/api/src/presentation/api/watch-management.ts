@@ -3,6 +3,8 @@ import { createLogger } from '../../infrastructure/logging/logger'
 import { AddLawToMonitoringUseCase } from '../../application/usecases/add-law-to-monitoring'
 import { CreateWatchListUseCase } from '../../application/usecases/create-watch-list'
 import { RemoveLawFromWatchListUseCase } from '../../application/usecases/remove-law-from-watch-list'
+import { DeleteWatchListUseCase } from '../../application/usecases/delete-watch-list'
+import { BulkRemoveLawsUseCase } from '../../application/usecases/bulk-remove-laws'
 import { createLawId } from '../../domain/law'
 import type { WatchListRepository } from '../../application/ports/watch-list-repository'
 import type { LawRepository } from '../../application/ports/law-repository'
@@ -10,10 +12,13 @@ import type { EGovApi } from '../../application/ports/e-gov-api'
 import { validateWatchRequest, validateWatchListRequest, handleValidationError } from './validation/request-validator'
 import { successResponse, errorResponse, notFoundResponse, badRequestResponse } from './responses/api-response'
 
+import { SnapshotRepository } from '../../infrastructure/database/prisma-snapshot-repository'
+
 export const createWatchManagementApp = (
   watchListRepository: WatchListRepository,
   lawRepository: LawRepository,
-  eGovClient: EGovApi
+  eGovClient: EGovApi,
+  snapshotRepository?: SnapshotRepository
 ) => {
   const app = new Hono()
   const logger = createLogger('WatchManagementAPI')
@@ -29,7 +34,7 @@ export const createWatchManagementApp = (
       }
 
       const { watchListId, lawId } = body
-      const addLawUseCase = new AddLawToMonitoringUseCase(watchListRepository, lawRepository, eGovClient)
+      const addLawUseCase = new AddLawToMonitoringUseCase(watchListRepository, lawRepository, eGovClient, snapshotRepository)
       const lawIdObj = createLawId(lawId)
       const updatedWatchList = await addLawUseCase.execute(watchListId, lawIdObj)
 
@@ -165,6 +170,74 @@ export const createWatchManagementApp = (
         return notFoundResponse(c, 'Watch list')
       }
       logger.error('Remove law from watch list failed', { 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      })
+      return errorResponse(c, 'Internal server error')
+    }
+  })
+
+  // 監視リスト削除
+  app.delete('/monitoring/watch-list/:watchListId', async (c) => {
+    try {
+      const watchListId = c.req.param('watchListId')
+      const userId = c.req.query('userId')
+
+      if (!watchListId) {
+        return badRequestResponse(c, 'watchListId is required')
+      }
+      if (!userId) {
+        return badRequestResponse(c, 'userId is required')
+      }
+
+      const deleteWatchListUseCase = new DeleteWatchListUseCase(watchListRepository)
+      await deleteWatchListUseCase.execute(watchListId, userId)
+
+      return successResponse(c, 'Watch list deleted successfully')
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Watch list not found') {
+        return notFoundResponse(c, 'Watch list')
+      }
+      if (error instanceof Error && error.message.includes('Unauthorized')) {
+        return c.json({ success: false, error: 'Unauthorized' }, 403)
+      }
+      logger.error('Delete watch list failed', { 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      })
+      return errorResponse(c, 'Internal server error')
+    }
+  })
+
+  // 複数法令の一括削除
+  app.delete('/monitoring/watch/:watchListId/bulk', async (c) => {
+    try {
+      const watchListId = c.req.param('watchListId')
+      const body = await c.req.json()
+      const { lawIds } = body
+
+      if (!watchListId) {
+        return badRequestResponse(c, 'watchListId is required')
+      }
+      if (!lawIds || !Array.isArray(lawIds) || lawIds.length === 0) {
+        return badRequestResponse(c, 'lawIds array is required')
+      }
+
+      const lawIdObjects = lawIds.map(id => createLawId(id))
+      const bulkRemoveUseCase = new BulkRemoveLawsUseCase(watchListRepository)
+      const updatedWatchList = await bulkRemoveUseCase.execute(watchListId, lawIdObjects)
+
+      return successResponse(c, undefined, {
+        watchList: {
+          id: updatedWatchList.id,
+          name: updatedWatchList.name,
+          lawIds: updatedWatchList.lawIds,
+          updatedAt: updatedWatchList.updatedAt
+        }
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Watch list not found') {
+        return notFoundResponse(c, 'Watch list')
+      }
+      logger.error('Bulk remove laws failed', { 
         error: error instanceof Error ? error.message : 'Unknown error' 
       })
       return errorResponse(c, 'Internal server error')

@@ -102,6 +102,23 @@ export class MockEGovClient implements EGovApi {
         promulgationDate: '1960-06-25',
         category: '憲法・法律',
         status: '施行中'
+      },
+      // テスト用追加法令
+      {
+        id: '331AC0000000126',
+        name: '食品安全基本法',
+        number: '平成十五年法律第四十八号',
+        promulgationDate: '2003-05-23',
+        category: '憲法・法律',
+        status: '施行中'
+      },
+      {
+        id: '414AC0000000037',
+        name: '個人情報保護法',
+        number: '平成十五年法律第五十七号',
+        promulgationDate: '2003-05-30',
+        category: '憲法・法律',
+        status: '施行中'
       }
     ]
   }

@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { LawIdInput } from '../molecules/law-id-input'
-import { MonitoredLawsList } from '../organisms/monitored-laws-list'
+import { ChangeDetectionButton } from '../molecules/change-detection-button'
+import { EnhancedMonitoredLawsList } from '../organisms/enhanced-monitored-laws-list'
+import { WatchListManagement } from '../organisms/watch-list-management'
 import { WatchListSelector } from '../molecules/watch-list-selector'
-import { getAllLaws, getUserWatchLists, createWatchList, addLawToWatchList, removeLawFromWatchList } from '../../lib/api'
+import { getAllLaws, getUserWatchLists, createWatchList, addLawToWatchList, removeLawFromWatchList, deleteWatchList, bulkRemoveLaws } from '../../lib/api'
 import type { WatchList, LawData } from '../../lib/api'
 
 export const MonitoringPage = () => {
@@ -120,6 +122,48 @@ export const MonitoringPage = () => {
     }
   }
 
+  const handleDeleteWatchList = async (watchListId: string) => {
+    setLoading(true)
+    try {
+      await deleteWatchList(watchListId, userId)
+      await loadData() // データを再読み込み
+      alert('監視リストが削除されました')
+    } catch (err) {
+      console.error('Failed to delete watch list:', err)
+      alert('監視リストの削除に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleBulkRemove = async (lawIds: string[]) => {
+    setLoading(true)
+    try {
+      // 各法令について、含まれる監視リストから削除
+      for (const lawId of lawIds) {
+        const listsWithLaw = watchLists.filter(list => list.lawIds.includes(lawId))
+        if (listsWithLaw.length > 0) {
+          await Promise.all(
+            listsWithLaw.map(list => removeLawFromWatchList(list.id, lawId))
+          )
+        }
+        
+        // 法令データ自体も削除
+        await fetch(`http://localhost:3000/laws/${lawId}`, {
+          method: 'DELETE',
+        })
+      }
+      
+      await loadData() // データを再読み込み
+      alert(`${lawIds.length}件の法令が監視対象から削除されました`)
+    } catch (err) {
+      console.error('Failed to bulk remove laws:', err)
+      alert('一括削除に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -140,6 +184,14 @@ export const MonitoringPage = () => {
           </div>
 
           <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">🔍 法令変更検知</h2>
+            <p className="text-gray-600 mb-4">
+              監視中の法令に変更がないかチェックします。変更が検出された場合、メール通知も送信されます。
+            </p>
+            <ChangeDetectionButton onDetectionComplete={() => loadData()} />
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">監視中の法令</h2>
             {loading ? (
               <div className="text-center py-8">
@@ -147,9 +199,27 @@ export const MonitoringPage = () => {
                 <p className="mt-2 text-gray-600">読み込み中...</p>
               </div>
             ) : (
-              <MonitoredLawsList 
+              <EnhancedMonitoredLawsList 
                 laws={monitoredLaws} 
                 onRemove={handleRemoveFromMonitoring}
+                onBulkRemove={handleBulkRemove}
+                loading={loading}
+              />
+            )}
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">監視リスト管理</h2>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">読み込み中...</p>
+              </div>
+            ) : (
+              <WatchListManagement 
+                watchLists={watchLists} 
+                onDeleteWatchList={handleDeleteWatchList}
+                loading={loading}
               />
             )}
           </div>

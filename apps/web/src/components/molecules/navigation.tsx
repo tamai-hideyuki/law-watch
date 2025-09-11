@@ -15,13 +15,13 @@ export const Navigation = () => {
           href="/" 
           className={`text-blue-600 hover:underline ${isActive('/') ? 'font-medium' : ''}`}
         >
-          監視対象追加
+          ホーム
         </Link>
         <Link 
           href="/monitoring" 
           className={`text-blue-600 hover:underline ${isActive('/monitoring') ? 'font-medium' : ''}`}
         >
-          監視管理
+          監視対象追加
         </Link>
         <Link 
           href="/laws" 

@@ -102,3 +102,20 @@ model LawChangeHistory {
   @@index([lawId])
   @@map("law_change_histories")
 }
+
+// 法令スナップショット（ハッシュによる変更検知用）
+model LawSnapshot {
+  id            String   @id @default(uuid())
+  lawId         String   @unique // 法令ID
+  contentHash   String   // 法令内容のSHA-256ハッシュ
+  metadata      Json?    // メタデータ（名前、番号、カテゴリなど）
+  lastContent   String?  @db.Text // 最後に取得した法令内容（比較用）
+  version       String?  // 法令バージョン
+  lastChecked   DateTime // 最終チェック日時
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([lawId])
+  @@index([lastChecked])
+  @@map("law_snapshots")
+}

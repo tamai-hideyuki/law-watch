@@ -11,6 +11,7 @@ import { RealEGovClient } from './infrastructure/e-gov/real-e-gov-client'
 import { PrismaWatchListRepository } from './infrastructure/database/prisma-watch-list-repository'
 import { PrismaNotificationRepository } from './infrastructure/database/prisma-notification-repository'
 import { PrismaLawRepository } from './infrastructure/database/prisma-law-repository'
+import { PrismaSnapshotRepository } from './infrastructure/database/prisma-snapshot-repository'
 import { EmailService } from './infrastructure/notification/email-service'
 import { SendNotificationUseCase } from './application/usecases/send-notification'
 import { createLogger } from './infrastructure/logging/logger'
@@ -27,6 +28,7 @@ const egovClient = useRealEGovApi ? new RealEGovClient() : new MockEGovClient()
 const lawRepository = new PrismaLawRepository(prisma)
 const watchListRepository = new PrismaWatchListRepository(prisma)
 const notificationRepository = new PrismaNotificationRepository(prisma)
+const snapshotRepository = new PrismaSnapshotRepository(prisma)
 const emailService = new EmailService()
 const sendNotificationUseCase = new SendNotificationUseCase(emailService)
 
@@ -43,7 +45,7 @@ app.use('/*', cors({
 // 各エンドポイントアプリを統合
 const searchApp = createSearchApp(lawRepository, egovClient)
 const lawsApp = createLawsApp(lawRepository, egovClient)
-const monitoringApp = createMonitoringApp(watchListRepository, lawRepository, notificationRepository, egovClient)
+const monitoringApp = createMonitoringApp(watchListRepository, lawRepository, notificationRepository, snapshotRepository, egovClient)
 
 app.route('/', searchApp)
 app.route('/', lawsApp)
