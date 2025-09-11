@@ -1,16 +1,16 @@
-# Law Watch 🏛️
+# Law Watch
 
 **法的変化の早期発見による社会の安全性向上システム**  
 *System for improving societal safety through early detection of legal changes*
 
-## 🎯 Vision
+## Vision
 
 企業や個人が法改正による影響を早期に察知し、適切に対応できる社会を実現する。  
 *To create a society where companies and individuals can detect the impact of legal revisions early and respond appropriately.*
 
-## 🏗️ アーキテクチャ
+## アーキテクチャ
 
-**世界クラスのTypeScriptバックエンドアーキテクチャ** を採用し、Clean Architecture（DDD 4層構成）で設計されています。
+**TypeScriptバックエンドアーキテクチャ** を採用し、Clean Architecture（DDD 4層構成）で設計されています。
 
 ```
 law-watch/
@@ -50,7 +50,7 @@ law-watch/
 └─────────────────────────────────────────
 ```
 
-## 🚀 技術スタック
+## 技術スタック
 
 ### バックエンド
 - **Runtime**: Node.js 20+
@@ -75,26 +75,26 @@ law-watch/
 - **Error Handling**: Result型（関数型プログラミング）
 - **Quality**: SOLID原則準拠、セキュリティ対策済み
 
-## 📋 実装済み機能
+## 実装済み機能
 
-### 🔍 法令検索・監視システム
+### 法令検索・監視システム
 - **法令検索**: キーワードによる日本の法令検索
 - **全法令一覧**: データベース内の法令を閲覧
 - **監視リスト**: ユーザーごとの法令監視管理
 - **監視操作**: ワンクリックで監視追加・削除
 
-### 📧 変更検知・通知システム
+### 変更検知・通知システム
 - **変更検知**: 監視中法令の自動変更検知
 - **メール通知**: 法改正通知の自動送信
 - **通知履歴**: ユーザーごとの通知一覧管理
 - **プレビュー**: Ethereal EmailによるメールUI確認
 
-### 🗂️ データ管理
+### データ管理
 - **実在法令データ**: 9つの日本の法令（労働基準法、建築基準法等）
 - **PostgreSQL**: 7テーブル設計（リレーション完備）
 - **Prisma**: 型安全なORM、マイグレーション管理
 
-## 🌐 API エンドポイント
+## API エンドポイント
 
 ### 検索・一覧系
 ```bash
@@ -117,7 +117,7 @@ GET /monitoring/notifications/{userId}        # 通知一覧
 POST /monitoring/simulate-change              # 変更シミュレーション
 ```
 
-## 🖥️ ページ構成
+## ページ構成
 
 | パス | ページ | 機能 |
 |------|--------|------|
@@ -125,18 +125,18 @@ POST /monitoring/simulate-change              # 変更シミュレーション
 | `/laws` | 全法令一覧 | 全法令表示、個別監視 |
 | `/monitoring` | 監視ダッシュボード | 監視中法令管理 |
 
-## 🏆 品質基準（達成済み）
+## 品質基準（達成済み）
 
-- ✅ **Clean Architecture**: DDD 4層アーキテクチャ完全実装
-- ✅ **型安全性**: any型0箇所、完全TypeScript化
-- ✅ **テスト品質**: TDD実装、203テスト、28ファイル
-- ✅ **関数型プログラミング**: Result型エラーハンドリング
-- ✅ **SOLID原則**: 単一責任・依存性逆転・開放閉鎖原則準拠
-- ✅ **セキュリティ**: SQLインジェクション対策、入力検証
-- ✅ **可観測性**: 構造化ログ、環境別設定
-- ✅ **メンテナンス性**: API分割、責任分離設計
+- **Clean Architecture**: DDD 4層アーキテクチャ完全実装
+- **型安全性**: any型0箇所、完全TypeScript化
+- **テスト品質**: TDD実装、203テスト、28ファイル
+- **関数型プログラミング**: Result型エラーハンドリング
+- **SOLID原則**: 単一責任・依存性逆転・開放閉鎖原則準拠
+- **セキュリティ**: SQLインジェクション対策、入力検証
+- **可観測性**: 構造化ログ、環境別設定
+- **メンテナンス性**: API分割、責任分離設計
 
-## 🚀 クイックスタート
+## クイックスタート
 
 ### 1. 環境準備
 ```bash
@@ -176,7 +176,7 @@ pnpm test
 pnpm test:safe
 ```
 
-## 🧪 API テスト例
+## API テスト例
 
 ```bash
 # 法令検索
@@ -196,7 +196,7 @@ curl -X POST http://localhost:3000/monitoring/watch \
 curl -X POST http://localhost:3000/monitoring/detect-changes
 ```
 
-## 📧 メール通知デモ
+## メール通知デモ
 
 ### 開発環境（Ethereal Email）
 1. 変更検知実行後、サーバーログでプレビューURL確認
@@ -214,7 +214,7 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 ```
 
-## 🔧 開発ガイド
+## 開発ガイド
 
 ### Prisma Studio（DB GUI）
 ```bash
@@ -231,7 +231,7 @@ export LOG_LEVEL=DEBUG  # DEBUG, INFO, WARN, ERROR
 2. **DB接続エラー**: `docker-compose up -d` でPostgreSQL起動確認
 3. **CORS エラー**: APIサーバー（3000）起動確認
 
-## 📊 プロジェクト統計
+## プロジェクト統計
 
 - **テストファイル**: 28ファイル
 - **総テスト数**: 203テスト（100%通過）
@@ -239,7 +239,7 @@ export LOG_LEVEL=DEBUG  # DEBUG, INFO, WARN, ERROR
 - **アーキテクチャ**: Clean Architecture準拠
 - **品質基準**: 世界クラスTypeScriptアーキテクチャ
 
-## 🔮 今後の拡張
+## 今後の拡張
 
 ### 高優先度
 - 実際のe-Gov API連携実装
@@ -251,13 +251,13 @@ export LOG_LEVEL=DEBUG  # DEBUG, INFO, WARN, ERROR
 - 変更内容詳細比較機能
 - フロントエンド完全型安全化
 
-## 📄 ライセンス
+## ライセンス
 
 このプロジェクトは[LICENSE](LICENSE)の下で公開されています。
 
 ---
 
-**Law Watch** - 法的変化の早期発見による社会の安全性向上を目指して 🏛️✨
+**Law Watch** - 法的変化の早期発見による社会の安全性向上を目指して
 
 
   必須コマンド
