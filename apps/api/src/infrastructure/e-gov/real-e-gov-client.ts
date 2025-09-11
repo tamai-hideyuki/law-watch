@@ -140,9 +140,17 @@ export class RealEGovClient implements EGovApi {
   }
 
   async getAllLaws(): Promise<EGovAllLawsResponse> {
+    await this.rateLimiter.waitForSlot()
+    
+    const startTime = Date.now()
     const url = `${this.baseUrl}/lawlists/1`
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout)
+    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60秒タイムアウト（大量データのため）
+
+    this.logger.info('Starting to fetch all laws from real e-Gov API', { 
+      url,
+      timeout: 60000
+    })
 
     try {
       const response = await fetch(url, {
@@ -160,29 +168,55 @@ export class RealEGovClient implements EGovApi {
       }
 
       const xmlText = await response.text()
-      const laws = await this.parseXmlToLawList(xmlText)
+      this.logger.info('XML response received', { 
+        xmlSize: xmlText.length,
+        fetchTimeMs: Date.now() - startTime
+      })
 
-      this.logger.info('All laws retrieved successfully', { count: laws.length })
+      const laws = await this.parseXmlToLawList(xmlText)
+      
+      // 開発・テスト環境では法令数を制限
+      const maxLaws = parseInt(process.env.E_GOV_MAX_LAWS || '0')
+      const finalLaws = maxLaws > 0 ? laws.slice(0, maxLaws) : laws
+
+      const processingTime = Date.now() - startTime
+
+      this.logger.info('All laws retrieved and parsed successfully', { 
+        totalFound: laws.length,
+        returned: finalLaws.length,
+        totalTimeMs: processingTime,
+        limited: maxLaws > 0
+      })
 
       return {
-        laws,
-        totalCount: laws.length,
+        laws: finalLaws,
+        totalCount: finalLaws.length,
         lastUpdated: new Date(),
-        version: '1.0.0'
+        version: `egov-v1-${new Date().toISOString().split('T')[0]}`,
+        success: true,
+        error: ''
       }
     } catch (error) {
       this.logger.error('Failed to get all laws', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timeElapsed: Date.now() - startTime
       })
-      throw error
+      
+      return {
+        laws: [],
+        totalCount: 0,
+        lastUpdated: new Date(),
+        version: 'error',
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
     }
   }
 
   private async parseXmlToLawList(xmlText: string): Promise<EGovLawData[]> {
-    // XMLパースの簡易実装（実際のe-Gov API形式に対応）
     try {
       // 実際のe-Gov APIの構造: <LawNameListInfo>要素を探す
-      const lawPattern = /<LawNameListInfo[^>]*>(.*?)<\/LawNameListInfo>/gs
+      const lawPattern = /<LawNameListInfo>(.*?)<\/LawNameListInfo>/gs
       const laws: EGovLawData[] = []
 
       let match
@@ -194,8 +228,18 @@ export class RealEGovClient implements EGovApi {
         const lawNumber = this.extractXmlValue(lawXml, 'LawNo') || ''
         const promulgationDate = this.extractXmlValue(lawXml, 'PromulgationDate') || ''
         
-        // e-Gov APIには種別と効力の情報がないため、デフォルト値を設定
-        const category = '憲法・法律'
+        // 法令番号から種別を推定
+        let category = '法令'
+        if (lawNumber.includes('憲法')) {
+          category = '憲法'
+        } else if (lawNumber.includes('法律')) {
+          category = '法律'
+        } else if (lawNumber.includes('政令')) {
+          category = '政令'
+        } else if (lawNumber.includes('省令') || lawNumber.includes('府令')) {
+          category = '省令'
+        }
+        
         const status = '施行中' // 法令一覧に含まれているものは基本的に現行法
 
         if (lawId && lawName) {
@@ -210,16 +254,16 @@ export class RealEGovClient implements EGovApi {
         }
       }
 
-      this.logger.debug('Parsed law list', {
+      this.logger.info('Parsed law list from real e-Gov API', {
         totalLaws: laws.length,
-        sampleLaws: laws.slice(0, 3).map(law => ({ id: law.id, name: law.name }))
+        sampleLaws: laws.slice(0, 5).map(law => ({ id: law.id, name: law.name, category: law.category }))
       })
 
       return laws
     } catch (error) {
       this.logger.error('Failed to parse XML law list', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        xmlSample: xmlText.substring(0, 500)
+        xmlSample: xmlText.substring(0, 1000)
       })
       throw new Error('Failed to parse law list XML')
     }
@@ -278,20 +322,6 @@ export class RealEGovClient implements EGovApi {
     return match ? match[1].trim() : null
   }
 
-  private mapEffectToStatus(effect: string): string {
-    // e-Gov APIの効力値をシステムのステータスにマッピング
-    switch (effect) {
-      case '現行法':
-      case '施行':
-        return '施行中'
-      case '廃止':
-        return '廃止'
-      case '未施行':
-        return '未施行'
-      default:
-        return '施行中'
-    }
-  }
 
   private formatDate(dateString: string): string {
     // e-Gov APIの日付形式（YYYYMMDD）をISO形式に変換

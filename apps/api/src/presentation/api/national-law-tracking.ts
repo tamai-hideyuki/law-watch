@@ -2,14 +2,14 @@ import { Hono } from 'hono'
 import { successResponse, errorResponse } from './responses/api-response'
 import { NationalLawTrackerUseCaseImpl } from '../../application/usecases/national-law-tracker'
 import { MockNationalLawTrackerRepository } from '../../infrastructure/repositories/mock-national-law-tracker-repository'
-import { MockEGovClient } from '../../infrastructure/e-gov/mock-e-gov-client'
+import { RealEGovClient } from '../../infrastructure/e-gov/real-e-gov-client'
 import { createLogger } from '../../infrastructure/logging/logger'
 
 const app = new Hono()
 const logger = createLogger('NationalLawTrackingAPI')
 
 // 依存性の注入
-const eGovApi = new MockEGovClient()
+const eGovApi = new RealEGovClient()
 const repository = new MockNationalLawTrackerRepository() // TODO: Prisma実装に置き換え
 const useCase = new NationalLawTrackerUseCaseImpl(eGovApi, repository)
 
