@@ -1,6 +1,19 @@
 export type LawId = string & { readonly brand: unique symbol }
 
 /**
+ * e-Gov APIで使用される法令IDの正規表現パターン
+ * 基本構造: 数字3桁 + 英数字の組み合わせ
+ * 
+ * 実際の法令IDの例:
+ * - 321CONSTITUTION (憲法)
+ * - 106DF0000000065 (太政官布告)
+ * - 117DF1000000032 (太政官布告)
+ * - 122AC0000000034 (法律)
+ * - 132AC1000000040 (法律変形)
+ */
+const LAW_ID_PATTERN = /^[0-9]{3}[A-Z0-9]+$/
+
+/**
  * 法令IDの有効なフォーマットかどうかを判定する
  * @param value 検証する文字列
  * @returns フォーマットが有効な場合はtrue
@@ -10,19 +23,7 @@ export const isValidLawIdFormat = (value: string): boolean => {
     return false
   }
   
-  // 実際のe-Gov APIで使用されている法令IDのフォーマット
-  // 基本構造: 数字3桁 + 文字列
-  // 例:
-  // - 321CONSTITUTION (憲法)
-  // - 106DF0000000065 (太政官布告)
-  // - 117DF1000000032 (太政官布告)
-  // - 122AC0000000034 (法律)
-  // - 132AC1000000040 (法律変形)
-  
-  // 最も柔軟なパターン: 3桁の数字で始まり、その後に文字と数字の組み合わせ
-  const lawIdPattern = /^[0-9]{3}[A-Z0-9]+$/
-  
-  return lawIdPattern.test(value)
+  return LAW_ID_PATTERN.test(value)
 }
 
 /**
