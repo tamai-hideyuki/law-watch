@@ -1,4 +1,4 @@
-import { EGovApi, EGovSearchResponse, EGovLawData } from '../../application/ports/e-gov-api'
+import { EGovApi, EGovSearchResponse, EGovLawData, EGovAllLawsResponse } from '../../application/ports/e-gov-api'
 import { SimpleSearchQuery as SearchQuery, LawId } from '../../domain/law'
 
 
@@ -191,5 +191,31 @@ export class MockEGovClient implements EGovApi {
     
     // 重複がある場合は最後の要素（通常の状態）を返す
     return matchingLaws[matchingLaws.length - 1]
+  }
+
+  async getAllLaws(): Promise<EGovAllLawsResponse> {
+    await new Promise(resolve => setTimeout(resolve, 200))
+    
+    const allLaws = this.getAllMockData()
+    
+    // 重複を除去（法令IDが重複している場合）
+    const uniqueLaws = allLaws.reduce((acc, law) => {
+      const existing = acc.find(l => l.id === law.id)
+      if (!existing) {
+        acc.push(law)
+      } else if (this.hasChanges && law.name.includes('改正版')) {
+        // 変更がある場合は改正版を優先
+        const index = acc.findIndex(l => l.id === law.id)
+        acc[index] = law
+      }
+      return acc
+    }, [] as EGovLawData[])
+    
+    return {
+      laws: uniqueLaws,
+      totalCount: uniqueLaws.length,
+      lastUpdated: new Date(),
+      version: this.hasChanges ? '2025.1.1' : '2025.1.0'
+    }
   }
 }

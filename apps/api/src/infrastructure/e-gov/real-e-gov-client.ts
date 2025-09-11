@@ -1,4 +1,4 @@
-import { EGovApi, EGovSearchResponse, EGovLawData } from '../../application/ports/e-gov-api'
+import { EGovApi, EGovSearchResponse, EGovLawData, EGovAllLawsResponse } from '../../application/ports/e-gov-api'
 import { SimpleSearchQuery as SearchQuery, LawId } from '../../domain/law'
 import { createLogger } from '../logging/logger'
 import { RateLimiter } from './rate-limiter'
@@ -127,7 +127,7 @@ export class RealEGovClient implements EGovApi {
     }
   }
 
-  private async getAllLaws(): Promise<EGovSearchResponse> {
+  async getAllLaws(): Promise<EGovAllLawsResponse> {
     const url = `${this.baseUrl}/lawlists/1`
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), this.timeout)
@@ -154,7 +154,9 @@ export class RealEGovClient implements EGovApi {
 
       return {
         laws,
-        totalCount: laws.length
+        totalCount: laws.length,
+        lastUpdated: new Date(),
+        version: '1.0.0'
       }
     } catch (error) {
       this.logger.error('Failed to get all laws', {

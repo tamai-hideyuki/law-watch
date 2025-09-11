@@ -14,7 +14,15 @@ export interface EGovSearchResponse {
   totalCount: number
 }
 
+export interface EGovAllLawsResponse {
+  laws: EGovLawData[]
+  totalCount: number
+  lastUpdated: Date
+  version: string
+}
+
 export interface EGovApi {
   searchLaws(query: SearchQuery): Promise<EGovSearchResponse>
   getLawDetail(id: LawId): Promise<EGovLawData>
+  getAllLaws(): Promise<EGovAllLawsResponse>
 }

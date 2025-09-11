@@ -29,6 +29,12 @@ export const Navigation = () => {
         >
           監視中法令
         </Link>
+        <Link 
+          href="/comprehensive" 
+          className={`text-blue-600 hover:underline ${isActive('/comprehensive') ? 'font-medium' : ''}`}
+        >
+          全法令監視
+        </Link>
       </div>
     </nav>
   )
