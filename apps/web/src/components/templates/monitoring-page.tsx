@@ -6,7 +6,7 @@ import { ChangeDetectionButton } from '../molecules/change-detection-button'
 import { EnhancedMonitoredLawsList } from '../organisms/enhanced-monitored-laws-list'
 import { WatchListManagement } from '../organisms/watch-list-management'
 import { WatchListSelector } from '../molecules/watch-list-selector'
-import { getAllLaws, getUserWatchLists, createWatchList, addLawToWatchList, removeLawFromWatchList, deleteWatchList, bulkRemoveLaws, updateWatchListName } from '../../lib/api'
+import { API_BASE_URL, getAllLaws, getUserWatchLists, createWatchList, addLawToWatchList, removeLawFromWatchList, deleteWatchList, bulkRemoveLaws, updateWatchListName } from '../../lib/api'
 import type { WatchList, LawData } from '../../lib/api'
 
 export const MonitoringPage = () => {
@@ -104,7 +104,7 @@ export const MonitoringPage = () => {
       }
       
       // 法令データ自体も削除（監視リストに含まれていない場合も削除可能）
-      const response = await fetch(`http://localhost:3000/laws/${law.id}`, {
+      const response = await fetch(`${API_BASE_URL}/laws/${law.id}`, {
         method: 'DELETE',
       })
       
@@ -163,7 +163,7 @@ export const MonitoringPage = () => {
         }
         
         // 法令データ自体も削除
-        await fetch(`http://localhost:3000/laws/${lawId}`, {
+        await fetch(`${API_BASE_URL}/laws/${lawId}`, {
           method: 'DELETE',
         })
       }
