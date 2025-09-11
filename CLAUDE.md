@@ -48,6 +48,15 @@ law-watch/
 | GET | `/monitoring/notifications/{userId}` | ユーザーの通知一覧取得 |
 | POST | `/monitoring/simulate-change` | 法令変更シミュレーション（テスト用） |
 
+### 🆕 日本全法令追跡システム（NationalLawTracker）
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| POST | `/national-tracking/scan` | **🔥 全日本法令フルスキャン実行**（非同期処理） |
+| POST | `/national-tracking/scan-incremental` | 増分スキャン実行（前回からの差分のみ） |
+| POST | `/national-tracking/scan-category` | カテゴリ別法令スキャン実行 |
+| GET | `/national-tracking/recent-changes?days=7` | 最近の法令変更履歴取得 |
+| GET | `/national-tracking/statistics` | スキャン統計情報取得 |
+
 ## 実装済み機能一覧
 
 ### 1. 法令検索システム
@@ -114,10 +123,50 @@ law-watch/
 - **エンドポイント**: `POST /monitoring/simulate-change`
 - **機能**: 法令変更をシミュレーション（テスト・デモ用）
 
+### 🆕 5. 日本全法令追跡システム（NationalLawTracker）
+
+#### 5.1 🔥 全法令フルスキャンシステム（メイン機能）
+- **エンドポイント**: `POST /national-tracking/scan`
+- **機能**: 日本の全法令を一括スキャンし、変更を自動検知
+- **実装**: NationalLawTrackerUseCaseImpl + MockNationalLawTrackerRepository
+- **スキャンロジック**:
+  - e-Gov APIから全法令データを取得
+  - 前回スナップショットとの差分比較
+  - メタデータハッシュ（SHA-256）による変更検知
+  - 変更タイプ分類：NEW（新規）、REVISED（改正）、ABOLISHED（廃止）、METADATA_CHANGED（メタデータ変更）
+- **データ保存**: NationalLawSnapshotテーブルにスナップショット履歴保存
+- **非同期処理**: スキャンは非同期実行、即座にレスポンス返却
+
+#### 5.2 増分スキャン機能
+- **エンドポイント**: `POST /national-tracking/scan-incremental`
+- **機能**: 前回スキャンからの差分のみをチェック
+- **実装**: 前回スキャン結果が存在しない場合は自動的にフルスキャンを実行
+
+#### 5.3 カテゴリ別スキャン機能
+- **エンドポイント**: `POST /national-tracking/scan-category`
+- **機能**: 特定カテゴリの法令のみをスキャン
+- **パラメータ**: `categories: string[]` - 対象カテゴリ配列
+- **用途**: 労働法、建築法など特定分野の集中監視
+
+#### 5.4 変更履歴取得システム
+- **エンドポイント**: `GET /national-tracking/recent-changes?days=7`
+- **機能**: 指定期間内の法令変更履歴を取得
+- **パラメータ**: `days` - 遡る日数（デフォルト7日）
+- **レスポンス**: 変更種別、法令ID、変更詳細、検知日時
+
+#### 5.5 スキャン統計システム
+- **エンドポイント**: `GET /national-tracking/statistics`
+- **機能**: スキャン実行統計の取得
+- **統計情報**:
+  - 最終スキャン実行日時
+  - スキャン対象法令総数
+  - 直近1週間の変更件数
+  - 直近1ヶ月の変更件数
+
 ## DDD アーキテクチャ詳細
 
 ### Domain Layer（ドメイン層）
-- **エンティティ**: Law, WatchList, LawChangeNotification, **LawSnapshot**
+- **エンティティ**: Law, WatchList, LawChangeNotification, **LawSnapshot**, **🆕 NationalLawSnapshot**
 - **値オブジェクト**: LawId, LawCategory, LawStatus, ChangeType, DateRange
 - **ドメインサービス**: **HashService** - SHA-256ハッシュ生成・比較
 - **バリデーションルール**: 
@@ -136,6 +185,7 @@ law-watch/
   - `DetectLawChangesWithHashUseCase`: **🔥 ハッシュベース変更検知**
   - `DetectLawChangesUseCase`: 従来の法令変更検知
   - `SendNotificationUseCase`: メール通知送信
+  - **🆕 `NationalLawTrackerUseCase`**: **日本全法令追跡システム**
 
 ### Infrastructure Layer（インフラ層）
 - **データアクセス**: 
@@ -143,6 +193,7 @@ law-watch/
   - `PrismaNotificationRepository`: 通知データ永続化（PostgreSQL）
   - `PrismaLawRepository`: 法令データ永続化（PostgreSQL）
   - **`PrismaLawSnapshotRepository`**: **ハッシュスナップショット永続化（PostgreSQL）**
+  - **🆕 `MockNationalLawTrackerRepository`**: **全法令追跡スナップショット管理（モック実装）**
   - Mock実装も併存（テスト用）
 - **外部API**: 
   - `MockEGovClient`: e-Gov API モック実装
@@ -156,6 +207,7 @@ law-watch/
   - `watch-management.ts`: 監視リスト管理API
   - `notification-management.ts`: 通知管理API
   - `search.ts`, `laws.ts`: 検索・法令一覧API
+  - **🆕 `national-law-tracking.ts`**: **全法令追跡システムAPI**
 - **共通コンポーネント**:
   - `request-validator.ts`: 統一バリデーション
   - `api-response.ts`: 統一レスポンス形式
@@ -210,8 +262,8 @@ components/
 ### バックエンドテスト
 - **カバレッジ**: ドメイン、アプリケーション、インフラ、プレゼンテーション層
 - **TDD実装**: テスト駆動開発によるドメインバリデーション実装
-- **テストファイル数**: 28ファイル
-- **総テスト数**: 203テスト（全て通過）
+- **テストファイル数**: 29ファイル
+- **総テスト数**: 222テスト（全て通過）
 - **テストフレームワーク**: Vitest + 型安全テスト
 
 ### 主要テストカテゴリ
@@ -225,13 +277,14 @@ components/
   - `law-validation.test.ts`: 法令データ検証 (13テスト)
   - `search-validation.test.ts`: 検索クエリ検証 (18テスト)
 
-#### 2. アプリケーション層テスト (12テスト)
+#### 2. アプリケーション層テスト (31テスト)
 - `search-laws.test.ts`: 法令検索ユースケース
 - `create-watch-list.test.ts`: 監視リスト作成
 - `add-law-to-watch-list.test.ts`: 法令監視追加
 - `remove-law-from-watch-list.test.ts`: 法令監視削除
 - `detect-law-changes.test.ts`: 変更検知処理
 - `send-notification.test.ts`: メール通知送信
+- **🆕 `national-law-tracker.test.ts`**: **全法令追跡システム (19テスト)**
 
 #### 3. インフラ層テスト (33テスト)
 - `email-service.test.ts`: メール送信サービス (2テスト)
@@ -311,6 +364,55 @@ components/
 }
 ```
 
+### 🆕 全法令スナップショット（NationalLawSnapshot）
+```typescript
+{
+  id: string                    // スナップショットID
+  lawId: string                 // 法令ID  
+  lawName: string               // 法令名
+  lawNumber: string             // 法令番号
+  promulgationDate: string      // 公布日
+  lastRevisionDate: string | null // 最終改正日
+  metadataHash: string          // メタデータのSHA-256ハッシュ
+  contentHash: string | null    // 本文ハッシュ（取得済みの場合）
+  category: string              // カテゴリ
+  status: string                // 状態
+  capturedAt: Date              // スナップショット作成日時
+}
+```
+
+### 🆕 法令変更検知（LawChangeDetection）
+```typescript
+{
+  lawId: string                      // 法令ID
+  lawName: string                    // 法令名
+  changeType: 'NEW' | 'REVISED' | 'ABOLISHED' | 'METADATA_CHANGED' // 変更種別
+  previousSnapshot?: NationalLawSnapshot // 前回スナップショット
+  currentSnapshot: NationalLawSnapshot   // 現在スナップショット
+  changes?: {                        // 変更詳細
+    field: string                    // 変更フィールド
+    oldValue: any                    // 変更前の値
+    newValue: any                    // 変更後の値
+  }[]
+  detectedAt: Date                   // 検知日時
+}
+```
+
+### 🆕 日次スキャン結果（DailyLawScanResult）
+```typescript
+{
+  scanId: string                     // スキャンID
+  startedAt: Date                    // 開始日時
+  completedAt: Date                  // 完了日時
+  totalLawsScanned: number           // スキャン対象法令数
+  newLaws: LawChangeDetection[]      // 新規法令
+  revisedLaws: LawChangeDetection[]  // 改正法令
+  abolishedLaws: LawChangeDetection[] // 廃止法令
+  metadataChanges: LawChangeDetection[] // メタデータ変更
+  errors: string[]                   // エラー一覧
+}
+```
+
 ## 実際の法令データ
 
 システムには以下の実在する日本の法令データが含まれています：
@@ -383,6 +485,23 @@ curl -X POST http://localhost:3000/monitoring/detect-changes
 
 # 通知一覧取得
 curl http://localhost:3000/monitoring/notifications/user-001
+
+# 🆕 全法令フルスキャン実行
+curl -X POST http://localhost:3000/national-tracking/scan
+
+# 🆕 増分スキャン実行
+curl -X POST http://localhost:3000/national-tracking/scan-incremental
+
+# 🆕 カテゴリ別スキャン実行
+curl -X POST http://localhost:3000/national-tracking/scan-category \
+  -H "Content-Type: application/json" \
+  -d '{"categories": ["労働", "建築"]}'
+
+# 🆕 最近の変更履歴取得
+curl http://localhost:3000/national-tracking/recent-changes?days=30
+
+# 🆕 スキャン統計取得
+curl http://localhost:3000/national-tracking/statistics
 ```
 
 ## メール通知設定
@@ -539,6 +658,12 @@ npx prisma studio  # http://localhost:5555
    - 構造化ログシステム
    - API分割・責任分離設計
    - **新機能追加によりテスト数増加**
+10. ✅ **🆕 日本全法令追跡システム** - 包括的な法令変更監視システムの完成:
+   - 全法令フルスキャン機能（非同期処理）
+   - 増分・カテゴリ別スキャン機能
+   - メタデータハッシュによる変更検知
+   - 変更履歴・統計情報管理
+   - 包括的テストカバレッジ（19テスト）
 
 ### トラブルシューティング
 
@@ -603,7 +728,7 @@ kill -9 [PID]
 ### 🏆 達成済み品質基準
 - ✅ **Clean Architecture**: DDD 4層アーキテクチャ完全実装
 - ✅ **型安全性**: any型0箇所、完全TypeScript化
-- ✅ **テスト品質**: TDD実装、203テスト、28ファイル
+- ✅ **テスト品質**: TDD実装、222テスト、29ファイル
 - ✅ **関数型プログラミング**: Result型エラーハンドリング
 - ✅ **SOLID原則**: 単一責任・依存性逆転・開放閉鎖原則準拠
 - ✅ **セキュリティ**: SQLインジェクション対策、入力検証
@@ -706,9 +831,15 @@ kill -9 [PID]
 - ✅ **正しいデータベース**: 監視対象法令のみ保存
 
 ## 最終更新
-- **日付**: 2025-09-11
-- **状態**: **変更検知システム設計完全変更完了** 🎊
-- **実装**: PostgreSQL + Prisma + Clean Architecture + TDD
-- **品質**: any型0箇所、203テスト通過、Result型システム
-- **機能**: 変更検知システムとして完全機能
-- **次フェーズ**: 本番e-Gov API連携・認証システム実装
+- **日付**: 2025-09-12
+- **状態**: **🆕 日本全法令追跡システム完全実装完了** 🎊
+- **実装**: PostgreSQL + Prisma + Clean Architecture + TDD + **NationalLawTracker**
+- **品質**: any型0箇所、222テスト通過、Result型システム
+- **機能**: 
+  - 変更検知システムとして完全機能
+  - **全法令フルスキャンシステム追加完了**
+  - **増分・カテゴリ別スキャン機能追加完了**
+  - **変更履歴・統計情報管理追加完了**
+- **APIエンドポイント**: 従来機能 + **5つの新規全法令追跡エンドポイント**
+- **テスト**: **19の新規テストケース追加**（包括的テストカバレッジ達成）
+- **次フェーズ**: 本番e-Gov API連携・認証システム実装・定期実行スケジューラー
