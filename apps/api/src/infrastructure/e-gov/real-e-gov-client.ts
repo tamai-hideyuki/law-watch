@@ -1,7 +1,19 @@
-import { EGovApi, EGovSearchResponse, EGovLawData } from '../../application/ports/e-gov-api'
+import { EGovApi, EGovSearchResponse, EGovLawData, EGovAllLawsResponse } from '../../application/ports/e-gov-api'
 import { SimpleSearchQuery as SearchQuery, LawId } from '../../domain/law'
 import { createLogger } from '../logging/logger'
 import { RateLimiter } from './rate-limiter'
+
+// デフォルト設定を名前付き定数として定義
+const DEFAULT_E_GOV_API_BASE_URL = 'https://laws.e-gov.go.jp/api/1'
+const DEFAULT_API_TIMEOUT_MS = '10000'
+const DEFAULT_RATE_LIMIT = '100'
+
+// 日本の元号から西暦への変換オフセット
+const ERA_OFFSETS = {
+  SHOWA: 1925,    // 昭和元年 = 1926年（昭和年 + 1925）
+  HEISEI: 1988,   // 平成元年 = 1989年（平成年 + 1988）
+  REIWA: 2018     // 令和元年 = 2019年（令和年 + 2018）
+} as const
 
 interface EGovLawListItem {
   法令ID: string
@@ -34,13 +46,13 @@ interface EGovLawDetailResponse {
 }
 
 export class RealEGovClient implements EGovApi {
-  private readonly baseUrl = process.env.E_GOV_API_BASE_URL || 'https://laws.e-gov.go.jp/api/1'
+  private readonly baseUrl = process.env.E_GOV_API_BASE_URL || DEFAULT_E_GOV_API_BASE_URL
   private readonly logger = createLogger('RealEGovClient')
-  private readonly timeout = parseInt(process.env.E_GOV_API_TIMEOUT || '10000')
+  private readonly timeout = parseInt(process.env.E_GOV_API_TIMEOUT || DEFAULT_API_TIMEOUT_MS)
   private readonly rateLimiter: RateLimiter
 
   constructor() {
-    const rateLimit = parseInt(process.env.E_GOV_API_RATE_LIMIT || '100')
+    const rateLimit = parseInt(process.env.E_GOV_API_RATE_LIMIT || DEFAULT_RATE_LIMIT)
     this.rateLimiter = new RateLimiter({
       maxRequests: rateLimit,
       windowMs: 60 * 1000 // 1分間のウィンドウ
@@ -127,7 +139,7 @@ export class RealEGovClient implements EGovApi {
     }
   }
 
-  private async getAllLaws(): Promise<EGovSearchResponse> {
+  async getAllLaws(): Promise<EGovAllLawsResponse> {
     const url = `${this.baseUrl}/lawlists/1`
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), this.timeout)
@@ -154,7 +166,9 @@ export class RealEGovClient implements EGovApi {
 
       return {
         laws,
-        totalCount: laws.length
+        totalCount: laws.length,
+        lastUpdated: new Date(),
+        version: '1.0.0'
       }
     } catch (error) {
       this.logger.error('Failed to get all laws', {
@@ -227,14 +241,14 @@ export class RealEGovClient implements EGovApi {
         const month = lawElementMatch[4]
         const day = lawElementMatch[5]
         
-        // 元号を西暦に変換（簡易版）
+        // 元号を西暦に変換
         let westernYear = parseInt(year)
         if (era === 'Showa') {
-          westernYear += 1925
+          westernYear += ERA_OFFSETS.SHOWA
         } else if (era === 'Heisei') {
-          westernYear += 1988
+          westernYear += ERA_OFFSETS.HEISEI
         } else if (era === 'Reiwa') {
-          westernYear += 2018
+          westernYear += ERA_OFFSETS.REIWA
         }
         
         promulgationDate = `${westernYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`

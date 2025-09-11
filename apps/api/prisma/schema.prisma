@@ -119,3 +119,82 @@ model LawSnapshot {
   @@index([lastChecked])
   @@map("law_snapshots")
 }
+
+// 全法令レジストリスナップショット（全法令の状態記録）
+model LawRegistrySnapshot {
+  id              String   @id @default(uuid())
+  snapshotDate    DateTime // スナップショット取得日時
+  totalLawCount   Int      // 総法令数
+  lawsChecksum    String   // 全法令のハッシュ値
+  metadata        Json     // メタデータ（バージョン、更新日時、カテゴリサマリーなど）
+  createdAt       DateTime @default(now())
+
+  // リレーション
+  previousDiffs LawRegistryDiff[] @relation("PreviousSnapshot")
+  currentDiffs  LawRegistryDiff[] @relation("CurrentSnapshot")
+
+  @@index([snapshotDate])
+  @@map("law_registry_snapshots")
+}
+
+// 全法令レジストリ差分（変更検知結果）
+model LawRegistryDiff {
+  id                  String   @id @default(uuid())
+  previousSnapshotId  String   // 前回スナップショットID
+  currentSnapshotId   String   // 現在スナップショットID
+  detectedAt          DateTime // 検知日時
+  diffData            Json     // 差分データ（新規、変更、廃止法令の詳細）
+  summary             Json     // サマリー（件数、影響カテゴリなど）
+  createdAt           DateTime @default(now())
+
+  // リレーション
+  previousSnapshot LawRegistrySnapshot @relation("PreviousSnapshot", fields: [previousSnapshotId], references: [id])
+  currentSnapshot  LawRegistrySnapshot @relation("CurrentSnapshot", fields: [currentSnapshotId], references: [id])
+
+  @@index([detectedAt])
+  @@index([previousSnapshotId])
+  @@index([currentSnapshotId])
+  @@map("law_registry_diffs")
+}
+
+// 包括的法令監視設定
+model ComprehensiveMonitoring {
+  id           String   @id @default(uuid())
+  userId       String   // ユーザーID
+  name         String   // 監視設定名
+  isActive     Boolean  @default(true) // 有効フラグ
+  settings     Json     // 監視設定（対象カテゴリ、通知設定など）
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastCheckAt  DateTime? // 最終チェック日時
+
+  // リレーション
+  notifications ComprehensiveNotification[]
+
+  @@index([userId])
+  @@index([isActive])
+  @@index([lastCheckAt])
+  @@map("comprehensive_monitoring")
+}
+
+// 包括的監視通知
+model ComprehensiveNotification {
+  id               String   @id @default(uuid())
+  monitoringId     String   // 監視設定ID
+  userId           String   // ユーザーID
+  title            String   // 通知タイトル
+  summary          String   @db.Text // 通知サマリー
+  diffData         Json     // 差分データ
+  notificationType String   // 通知種別（immediate, daily_summary, weekly_summary）
+  isRead           Boolean  @default(false) // 既読フラグ
+  createdAt        DateTime @default(now())
+  readAt           DateTime? // 読了日時
+
+  // リレーション
+  monitoring ComprehensiveMonitoring @relation(fields: [monitoringId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([monitoringId])
+  @@index([createdAt])
+  @@map("comprehensive_notifications")
+}
