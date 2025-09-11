@@ -19,6 +19,8 @@ export interface EGovAllLawsResponse {
   totalCount: number
   lastUpdated: Date
   version: string
+  success: boolean
+  error: string
 }
 
 export interface EGovApi {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ComprehensiveMonitoringSetup, ComprehensiveMonitoringParams } from '../molecules/comprehensive-monitoring-setup'
 import { ComprehensiveMonitoringControl } from '../molecules/comprehensive-monitoring-control'
+import { NationalLawScanner } from '../molecules/national-law-scanner'
 
 interface ComprehensiveMonitoring {
   id: string
@@ -165,6 +166,11 @@ export function ComprehensiveMonitoringDashboard() {
         <p className="text-gray-600">
           日本の全法令データベースを監視し、新規追加・変更・廃止を自動検知します
         </p>
+      </div>
+
+      {/* 全法令スキャナー */}
+      <div className="max-w-4xl mx-auto">
+        <NationalLawScanner />
       </div>
 
       {/* エラー表示 */}

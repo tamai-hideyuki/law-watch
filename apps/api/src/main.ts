@@ -7,6 +7,7 @@ import { createSearchApp } from './presentation/api/search'
 import { createLawsApp } from './presentation/api/laws'
 import { createMonitoringApp } from './presentation/api/monitoring-new'
 import comprehensiveMonitoringApp from './presentation/api/comprehensive-monitoring'
+import { nationalLawTrackingApp } from './presentation/api/national-law-tracking'
 import { MockEGovClient } from './infrastructure/e-gov/mock-e-gov-client'
 import { RealEGovClient } from './infrastructure/e-gov/real-e-gov-client'
 import { PrismaWatchListRepository } from './infrastructure/database/prisma-watch-list-repository'
@@ -52,6 +53,7 @@ app.route('/', searchApp)
 app.route('/', lawsApp)
 app.route('/', monitoringApp)
 app.route('/comprehensive', comprehensiveMonitoringApp)
+app.route('/national-tracking', nationalLawTrackingApp)
 
 const port = 3000
 logger.info('Law Watch API started', {
