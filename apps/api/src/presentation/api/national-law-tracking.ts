@@ -1,15 +1,15 @@
 import { Hono } from 'hono'
-import { createApiResponse, createErrorResponse } from './api-response'
+import { successResponse, errorResponse } from './responses/api-response'
 import { NationalLawTrackerUseCaseImpl } from '../../application/usecases/national-law-tracker'
 import { MockNationalLawTrackerRepository } from '../../infrastructure/repositories/mock-national-law-tracker-repository'
-import { container } from '../../infrastructure/container/dependency-injection'
+import { MockEGovClient } from '../../infrastructure/e-gov/mock-e-gov-client'
 import { createLogger } from '../../infrastructure/logging/logger'
 
 const app = new Hono()
 const logger = createLogger('NationalLawTrackingAPI')
 
 // 依存性の注入
-const eGovApi = container.getEGovApi()
+const eGovApi = new MockEGovClient()
 const repository = new MockNationalLawTrackerRepository() // TODO: Prisma実装に置き換え
 const useCase = new NationalLawTrackerUseCaseImpl(eGovApi, repository)
 
@@ -44,17 +44,14 @@ app.post('/scan', async (c) => {
       logger.error('Unexpected error during scan', { error })
     })
     
-    return c.json(createApiResponse({
+    return successResponse(c, {
       message: 'スキャンを開始しました。完了まで数分かかる場合があります。',
       status: 'STARTED'
-    }))
+    })
     
   } catch (error) {
     logger.error('Failed to start scan', { error })
-    return c.json(
-      createErrorResponse('スキャンの開始に失敗しました'),
-      500
-    )
+    return errorResponse(c, 'スキャンの開始に失敗しました', 500)
   }
 })
 
@@ -69,7 +66,7 @@ app.post('/scan-incremental', async (c) => {
     const result = await useCase.performIncrementalScan()
     
     if (result.success) {
-      return c.json(createApiResponse({
+      return successResponse(c, {
         scanId: result.data.scanId,
         totalScanned: result.data.totalLawsScanned,
         changes: {
@@ -79,17 +76,14 @@ app.post('/scan-incremental', async (c) => {
           metadata: result.data.metadataChanges.length
         },
         completedAt: result.data.completedAt
-      }))
+      })
     } else {
-      return c.json(createErrorResponse(result.error), 500)
+      return errorResponse(c, result.error, 500)
     }
     
   } catch (error) {
     logger.error('Incremental scan failed', { error })
-    return c.json(
-      createErrorResponse('増分スキャンに失敗しました'),
-      500
-    )
+    return errorResponse(c, '増分スキャンに失敗しました', 500)
   }
 })
 
@@ -103,10 +97,7 @@ app.post('/scan-category', async (c) => {
     const { categories } = body
     
     if (!categories || !Array.isArray(categories)) {
-      return c.json(
-        createErrorResponse('カテゴリを指定してください'),
-        400
-      )
+      return errorResponse(c, 'カテゴリを指定してください', 400)
     }
     
     logger.info('Starting category scan', { categories })
@@ -114,7 +105,7 @@ app.post('/scan-category', async (c) => {
     const result = await useCase.performCategoryScan(categories)
     
     if (result.success) {
-      return c.json(createApiResponse({
+      return successResponse(c, {
         scanId: result.data.scanId,
         categories,
         totalScanned: result.data.totalLawsScanned,
@@ -124,17 +115,14 @@ app.post('/scan-category', async (c) => {
           abolished: result.data.abolishedLaws.length,
           metadata: result.data.metadataChanges.length
         }
-      }))
+      })
     } else {
-      return c.json(createErrorResponse(result.error), 500)
+      return errorResponse(c, result.error, 500)
     }
     
   } catch (error) {
     logger.error('Category scan failed', { error })
-    return c.json(
-      createErrorResponse('カテゴリスキャンに失敗しました'),
-      500
-    )
+    return errorResponse(c, 'カテゴリスキャンに失敗しました', 500)
   }
 })
 
@@ -149,7 +137,7 @@ app.get('/recent-changes', async (c) => {
     const result = await useCase.getRecentChanges(days)
     
     if (result.success) {
-      return c.json(createApiResponse({
+      return successResponse(c, {
         days,
         totalChanges: result.data.length,
         changes: result.data.map(change => ({
@@ -159,17 +147,14 @@ app.get('/recent-changes', async (c) => {
           detectedAt: change.detectedAt,
           changes: change.changes
         }))
-      }))
+      })
     } else {
-      return c.json(createErrorResponse(result.error), 500)
+      return errorResponse(c, result.error, 500)
     }
     
   } catch (error) {
     logger.error('Failed to get recent changes', { error })
-    return c.json(
-      createErrorResponse('変更履歴の取得に失敗しました'),
-      500
-    )
+    return errorResponse(c, '変更履歴の取得に失敗しました', 500)
   }
 })
 
@@ -182,17 +167,14 @@ app.get('/statistics', async (c) => {
     const result = await useCase.getScanStatistics()
     
     if (result.success) {
-      return c.json(createApiResponse(result.data))
+      return successResponse(c, result.data)
     } else {
-      return c.json(createErrorResponse(result.error), 500)
+      return errorResponse(c, result.error, 500)
     }
     
   } catch (error) {
     logger.error('Failed to get statistics', { error })
-    return c.json(
-      createErrorResponse('統計情報の取得に失敗しました'),
-      500
-    )
+    return errorResponse(c, '統計情報の取得に失敗しました', 500)
   }
 })
 
