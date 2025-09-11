@@ -3,6 +3,11 @@ import { SimpleSearchQuery as SearchQuery, LawId } from '../../domain/law'
 import { createLogger } from '../logging/logger'
 import { RateLimiter } from './rate-limiter'
 
+// デフォルト設定を名前付き定数として定義
+const DEFAULT_E_GOV_API_BASE_URL = 'https://laws.e-gov.go.jp/api/1'
+const DEFAULT_API_TIMEOUT_MS = '10000'
+const DEFAULT_RATE_LIMIT = '100'
+
 interface EGovLawListItem {
   法令ID: string
   法令名: string
@@ -34,13 +39,13 @@ interface EGovLawDetailResponse {
 }
 
 export class RealEGovClient implements EGovApi {
-  private readonly baseUrl = process.env.E_GOV_API_BASE_URL || 'https://laws.e-gov.go.jp/api/1'
+  private readonly baseUrl = process.env.E_GOV_API_BASE_URL || DEFAULT_E_GOV_API_BASE_URL
   private readonly logger = createLogger('RealEGovClient')
-  private readonly timeout = parseInt(process.env.E_GOV_API_TIMEOUT || '10000')
+  private readonly timeout = parseInt(process.env.E_GOV_API_TIMEOUT || DEFAULT_API_TIMEOUT_MS)
   private readonly rateLimiter: RateLimiter
 
   constructor() {
-    const rateLimit = parseInt(process.env.E_GOV_API_RATE_LIMIT || '100')
+    const rateLimit = parseInt(process.env.E_GOV_API_RATE_LIMIT || DEFAULT_RATE_LIMIT)
     this.rateLimiter = new RateLimiter({
       maxRequests: rateLimit,
       windowMs: 60 * 1000 // 1分間のウィンドウ
