@@ -17,6 +17,15 @@ export class MockEGovClient implements EGovApi {
   }
   private getAllMockData(): EGovLawData[] {
     return [
+      // 憲法
+      {
+        id: '321CONSTITUTION',
+        name: '日本国憲法',
+        number: '憲法',
+        promulgationDate: '1946-11-03',
+        category: '憲法・法律',
+        status: '施行中'
+      },
       // 労働関連
       {
         id: '322AC0000000049',
