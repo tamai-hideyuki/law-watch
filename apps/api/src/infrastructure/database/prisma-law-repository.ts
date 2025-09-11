@@ -5,6 +5,7 @@ import { LawId, createLawId } from '../../domain/law/value-objects/law-id'
 import { LawCategory, createLawCategory } from '../../domain/law/value-objects/law-category'
 import { LawStatus, createLawStatus } from '../../domain/law/value-objects/law-status'
 import { SearchQuery, SearchResult, createSearchResult } from '../../domain/law/value-objects'
+import { Result, ok, err } from '../../domain/common/result'
 
 export class PrismaLawRepository implements LawRepository {
   private prisma: PrismaClient
@@ -159,9 +160,17 @@ export class PrismaLawRepository implements LawRepository {
     )
   }
 
-  async delete(id: LawId): Promise<void> {
-    await this.prisma.law.delete({
-      where: { id: id }
-    })
+  async delete(id: LawId): Promise<Result<void, string>> {
+    try {
+      await this.prisma.law.delete({
+        where: { id: id }
+      })
+      return ok(undefined)
+    } catch (error) {
+      if (error instanceof Error) {
+        return err(`Failed to delete law: ${error.message}`)
+      }
+      return err('Failed to delete law: Unknown error')
+    }
   }
 }

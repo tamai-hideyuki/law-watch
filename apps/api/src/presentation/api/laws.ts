@@ -4,6 +4,7 @@ import type { LawRepository } from '../../application/ports/law-repository'
 import type { EGovApi } from '../../application/ports/e-gov-api'
 import { cors } from 'hono/cors'
 import { createLogger } from '../../infrastructure/logging/logger'
+import { createLawId } from '../../domain/law/value-objects/law-id'
 
 export const createLawsApp = (lawRepository: LawRepository, egovApi: EGovApi) => {
     const app = new Hono()
@@ -12,7 +13,7 @@ export const createLawsApp = (lawRepository: LawRepository, egovApi: EGovApi) =>
     app.use('*', cors({
       origin: ['http://localhost:3001'],
       allowHeaders: ['Content-Type'],
-      allowMethods: ['GET', 'POST'],
+      allowMethods: ['GET', 'POST', 'DELETE'],
     }))
 
     const getMonitoredLawsUseCase = new GetMonitoredLawsUseCase(lawRepository)
@@ -34,6 +35,27 @@ export const createLawsApp = (lawRepository: LawRepository, egovApi: EGovApi) =>
         laws: result.laws,
         executedAt: result.executedAt
       })
+    })
+
+    // 孤立した法令データを削除するためのエンドポイント
+    app.delete('/laws/:lawId', async (c) => {
+      const lawIdString = c.req.param('lawId')
+      
+      try {
+        const lawId = createLawId(lawIdString)
+        const result = await lawRepository.delete(lawId)
+        if (result.success) {
+          logger.info(`Law deleted: ${lawIdString}`)
+          return c.json({ success: true, message: `Law ${lawIdString} deleted` })
+        } else {
+          logger.error(`Failed to delete law: ${lawIdString}`, { error: result.error })
+          return c.json({ success: false, error: result.error }, 400)
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        logger.error(`Error deleting law: ${lawIdString}`, { error: errorMessage })
+        return c.json({ success: false, error: errorMessage }, 500)
+      }
     })
   
     return app

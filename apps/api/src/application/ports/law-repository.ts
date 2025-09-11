@@ -1,4 +1,5 @@
 import { Law, LawId, LawCategory, SimpleSearchQuery as SearchQuery, SimpleSearchResult as SearchResult } from '../../domain/law'
+import type { Result } from '../../domain/common/result'
 
 export interface LawRepository {
   save(law: Law): Promise<Law>
@@ -7,5 +8,5 @@ export interface LawRepository {
   findAll(): Promise<Law[]>
   findByIds(ids: LawId[]): Promise<Law[]>
   findByCategory(category: LawCategory): Promise<Law[]>
-  delete(id: LawId): Promise<void>
+  delete(id: LawId): Promise<Result<void, string>>
 }
