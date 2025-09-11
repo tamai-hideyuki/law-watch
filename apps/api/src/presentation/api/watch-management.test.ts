@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createWatchManagementApp } from './watch-management'
 import type { WatchListRepository } from '../../application/ports/watch-list-repository'
+import type { LawRepository } from '../../application/ports/law-repository'
+import type { EGovApi } from '../../application/ports/e-gov-api'
 import { createWatchList } from '../../domain/monitoring/entities/watch-list'
 import { createLawId } from '../../domain/law'
 
@@ -13,12 +15,27 @@ const mockWatchListRepository: WatchListRepository = {
   delete: vi.fn()
 }
 
+const mockLawRepository: LawRepository = {
+  save: vi.fn(),
+  findById: vi.fn(),
+  search: vi.fn(),
+  findAll: vi.fn(),
+  findByIds: vi.fn(),
+  findByCategory: vi.fn(),
+  delete: vi.fn()
+}
+
+const mockEGovApi: EGovApi = {
+  searchLaws: vi.fn(),
+  getLawDetail: vi.fn()
+}
+
 describe('WatchManagementApp', () => {
   let app: any
 
   beforeEach(() => {
     vi.clearAllMocks()
-    app = createWatchManagementApp(mockWatchListRepository)
+    app = createWatchManagementApp(mockWatchListRepository, mockLawRepository, mockEGovApi)
   })
 
   describe('POST /monitoring/watch', () => {
@@ -32,7 +49,20 @@ describe('WatchManagementApp', () => {
         lawIds: [createLawId('322AC0000000049')]
       }
 
+      const mockLawData = {
+        id: '322AC0000000049',
+        name: '労働基準法',
+        number: '昭和二十二年法律第四十九号',
+        promulgationDate: '1947-04-07',
+        category: '憲法・法律',
+        status: '施行中'
+      }
+
+      // AddLawToMonitoringUseCaseの動作をモック
       mockWatchListRepository.findById = vi.fn().mockResolvedValue(mockWatchList)
+      mockLawRepository.findById = vi.fn().mockResolvedValue(null) // 法令がまだ存在しない
+      mockEGovApi.getLawDetail = vi.fn().mockResolvedValue(mockLawData) // e-Gov APIから取得
+      mockLawRepository.save = vi.fn().mockResolvedValue(mockLawData) // データベースに保存
       mockWatchListRepository.save = vi.fn().mockResolvedValue(mockWatchList)
 
       const req = new Request('http://localhost/monitoring/watch', {

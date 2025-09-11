@@ -13,8 +13,8 @@ export class PrismaLawRepository implements LawRepository {
     this.prisma = prisma
   }
 
-  async save(law: Law): Promise<void> {
-    await this.prisma.law.upsert({
+  async save(law: Law): Promise<Law> {
+    const savedData = await this.prisma.law.upsert({
       where: { id: law.id },
       update: {
         name: law.name,
@@ -32,6 +32,15 @@ export class PrismaLawRepository implements LawRepository {
         status: law.status,
         promulgationDate: law.promulgationDate
       }
+    })
+
+    return createLaw({
+      id: savedData.id,
+      name: savedData.name,
+      number: savedData.number,
+      category: savedData.category,
+      status: savedData.status,
+      promulgationDate: savedData.promulgationDate
     })
   }
 
@@ -115,7 +124,7 @@ export class PrismaLawRepository implements LawRepository {
   async findByIds(ids: LawId[]): Promise<Law[]> {
     const laws = await this.prisma.law.findMany({
       where: {
-        id: { in: ids.map(id => id) }
+        id: { in: ids }
       },
       orderBy: { name: 'asc' }
     })

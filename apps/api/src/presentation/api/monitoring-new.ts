@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { createLogger } from '../../infrastructure/logging/logger'
 import type { WatchListRepository } from '../../application/ports/watch-list-repository'
+import type { LawRepository } from '../../application/ports/law-repository'
 import type { NotificationRepository } from '../../application/ports/notification-repository'
 import type { EGovApi } from '../../application/ports/e-gov-api'
 import { createWatchManagementApp } from './watch-management'
@@ -9,6 +10,7 @@ import { createNotificationManagementApp } from './notification-management'
 
 export const createMonitoringApp = (
   watchListRepository: WatchListRepository,
+  lawRepository: LawRepository,
   notificationRepository: NotificationRepository,
   egovApi: EGovApi
 ) => {
@@ -32,7 +34,7 @@ export const createMonitoringApp = (
   })
 
   // 監視管理機能
-  const watchManagementApp = createWatchManagementApp(watchListRepository)
+  const watchManagementApp = createWatchManagementApp(watchListRepository, lawRepository, egovApi)
   app.route('/', watchManagementApp)
 
   // 通知管理機能

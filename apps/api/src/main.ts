@@ -43,7 +43,7 @@ app.use('/*', cors({
 // 各エンドポイントアプリを統合
 const searchApp = createSearchApp(lawRepository, egovClient)
 const lawsApp = createLawsApp(lawRepository, egovClient)
-const monitoringApp = createMonitoringApp(watchListRepository, notificationRepository, egovClient)
+const monitoringApp = createMonitoringApp(watchListRepository, lawRepository, notificationRepository, egovClient)
 
 app.route('/', searchApp)
 app.route('/', lawsApp)

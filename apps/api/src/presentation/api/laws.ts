@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
-import { SearchLawsUseCase } from '../../application/usecases/search-laws'
-import { createSimpleSearchQuery } from '../../domain/law'
+import { GetMonitoredLawsUseCase } from '../../application/usecases/get-monitored-laws'
 import type { LawRepository } from '../../application/ports/law-repository'
 import type { EGovApi } from '../../application/ports/e-gov-api'
 import { cors } from 'hono/cors'
@@ -16,7 +15,7 @@ export const createLawsApp = (lawRepository: LawRepository, egovApi: EGovApi) =>
       allowMethods: ['GET', 'POST'],
     }))
 
-    const searchUseCase = new SearchLawsUseCase(lawRepository, egovApi)
+    const getMonitoredLawsUseCase = new GetMonitoredLawsUseCase(lawRepository)
   
     app.onError((err, c) => {
       logger.error('Laws API error', { 
@@ -27,9 +26,8 @@ export const createLawsApp = (lawRepository: LawRepository, egovApi: EGovApi) =>
     })
   
     app.get('/laws', async (c) => {
-      // 全法令取得のため特別なクエリマーカーを使用してみた
-      const searchQuery = createSimpleSearchQuery('__ALL_LAWS__')
-      const result = await searchUseCase.execute(searchQuery)
+      // 監視対象として登録されている法令のみを取得
+      const result = await getMonitoredLawsUseCase.execute()
       
       return c.json({
         totalCount: result.totalCount,

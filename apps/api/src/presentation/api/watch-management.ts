@@ -1,18 +1,24 @@
 import { Hono } from 'hono'
 import { createLogger } from '../../infrastructure/logging/logger'
-import { AddLawToWatchListUseCase } from '../../application/usecases/add-law-to-watch-list'
+import { AddLawToMonitoringUseCase } from '../../application/usecases/add-law-to-monitoring'
 import { CreateWatchListUseCase } from '../../application/usecases/create-watch-list'
 import { RemoveLawFromWatchListUseCase } from '../../application/usecases/remove-law-from-watch-list'
 import { createLawId } from '../../domain/law'
 import type { WatchListRepository } from '../../application/ports/watch-list-repository'
+import type { LawRepository } from '../../application/ports/law-repository'
+import type { EGovApi } from '../../application/ports/e-gov-api'
 import { validateWatchRequest, validateWatchListRequest, handleValidationError } from './validation/request-validator'
 import { successResponse, errorResponse, notFoundResponse, badRequestResponse } from './responses/api-response'
 
-export const createWatchManagementApp = (watchListRepository: WatchListRepository) => {
+export const createWatchManagementApp = (
+  watchListRepository: WatchListRepository,
+  lawRepository: LawRepository,
+  eGovClient: EGovApi
+) => {
   const app = new Hono()
   const logger = createLogger('WatchManagementAPI')
 
-  // ウォッチリストに法令を追加
+  // ウォッチリストに法令を追加（e-Gov APIから法令データを取得して保存）
   app.post('/monitoring/watch', async (c) => {
     try {
       const body = await c.req.json()
@@ -23,7 +29,7 @@ export const createWatchManagementApp = (watchListRepository: WatchListRepositor
       }
 
       const { watchListId, lawId } = body
-      const addLawUseCase = new AddLawToWatchListUseCase(watchListRepository)
+      const addLawUseCase = new AddLawToMonitoringUseCase(watchListRepository, lawRepository, eGovClient)
       const lawIdObj = createLawId(lawId)
       const updatedWatchList = await addLawUseCase.execute(watchListId, lawIdObj)
 
