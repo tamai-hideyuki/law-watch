@@ -258,3 +258,30 @@ export LOG_LEVEL=DEBUG  # DEBUG, INFO, WARN, ERROR
 ---
 
 **Law Watch** - 法的変化の早期発見による社会の安全性向上を目指して 🏛️✨
+
+
+  必須コマンド
+
+  1. PostgreSQL起動
+
+  docker compose up -d
+  - データベース（PostgreSQL）をバックグラウンドで起動
+
+  2. 開発サーバー起動
+
+  pnpm dev
+  - API サーバー（ポート3000）とWebアプリ（ポート3001）を同時起動
+
+  3. データベース管理UI
+
+  npx prisma studio
+  - データベース内容を確認・編集するGUI（ポート5555）
+
+  システム構成
+
+  起動後のアクセス先：
+  - Webアプリ: http://localhost:3001
+  - API サーバー: http://localhost:3000
+  - Prisma Studio: http://localhost:5555
+  - PostgreSQL: localhost:5432
+  

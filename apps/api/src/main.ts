@@ -7,9 +7,11 @@ import { createSearchApp } from './presentation/api/search'
 import { createLawsApp } from './presentation/api/laws'
 import { createMonitoringApp } from './presentation/api/monitoring-new'
 import { MockEGovClient } from './infrastructure/e-gov/mock-e-gov-client'
+import { RealEGovClient } from './infrastructure/e-gov/real-e-gov-client'
 import { PrismaWatchListRepository } from './infrastructure/database/prisma-watch-list-repository'
 import { PrismaNotificationRepository } from './infrastructure/database/prisma-notification-repository'
 import { PrismaLawRepository } from './infrastructure/database/prisma-law-repository'
+import { PrismaSnapshotRepository } from './infrastructure/database/prisma-snapshot-repository'
 import { EmailService } from './infrastructure/notification/email-service'
 import { SendNotificationUseCase } from './application/usecases/send-notification'
 import { createLogger } from './infrastructure/logging/logger'
@@ -18,11 +20,15 @@ import { createLogger } from './infrastructure/logging/logger'
 const logger = createLogger('Main')
 const prisma = new PrismaClient()
 
+// 環境変数に基づいてe-Gov APIクライアントを選択
+const useRealEGovApi = process.env.USE_REAL_E_GOV_API === 'true'
+const egovClient = useRealEGovApi ? new RealEGovClient() : new MockEGovClient()
+
 // PrismaRepositoryを使用
 const lawRepository = new PrismaLawRepository(prisma)
 const watchListRepository = new PrismaWatchListRepository(prisma)
 const notificationRepository = new PrismaNotificationRepository(prisma)
-const egovClient = new MockEGovClient()
+const snapshotRepository = new PrismaSnapshotRepository(prisma)
 const emailService = new EmailService()
 const sendNotificationUseCase = new SendNotificationUseCase(emailService)
 
@@ -39,7 +45,7 @@ app.use('/*', cors({
 // 各エンドポイントアプリを統合
 const searchApp = createSearchApp(lawRepository, egovClient)
 const lawsApp = createLawsApp(lawRepository, egovClient)
-const monitoringApp = createMonitoringApp(watchListRepository, notificationRepository, egovClient)
+const monitoringApp = createMonitoringApp(watchListRepository, lawRepository, notificationRepository, snapshotRepository, egovClient)
 
 app.route('/', searchApp)
 app.route('/', lawsApp)
@@ -49,7 +55,8 @@ const port = 3000
 logger.info('Law Watch API started', {
   port,
   url: `http://localhost:${port}`,
-  database: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/law_watch_dev'
+  database: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/law_watch_dev',
+  egovClient: useRealEGovApi ? 'RealEGovClient' : 'MockEGovClient'
 })
 
 // グレースフルシャットダウン
