@@ -22,6 +22,7 @@ import {
   CheckInterval
 } from '../../domain/monitoring/entities/comprehensive-monitoring'
 import { createHash } from 'crypto'
+import { createLogger } from '../../infrastructure/logging/logger'
 
 export interface ComprehensiveLawMonitoringUseCase {
   createComprehensiveMonitoring(params: CreateComprehensiveMonitoringParams): Promise<Result<ComprehensiveMonitoring, string>>
@@ -40,6 +41,8 @@ export interface CreateComprehensiveMonitoringParams {
 }
 
 export class ComprehensiveLawMonitoringUseCaseImpl implements ComprehensiveLawMonitoringUseCase {
+  private readonly logger = createLogger('ComprehensiveLawMonitoringUseCase')
+  
   constructor(
     private readonly eGovApi: EGovApi,
     private readonly lawRegistryRepository: LawRegistryRepository,
@@ -200,51 +203,58 @@ export class ComprehensiveLawMonitoringUseCaseImpl implements ComprehensiveLawMo
     currentSnapshot: LawRegistrySnapshot,
     currentAllLaws: EGovAllLawsResponse
   ): Promise<LawRegistryDiff> {
-    // 簡易的な差分検知（実際の実装では詳細な比較が必要）
-    // ハッシュが異なる場合のみ変更ありとみなす
-    
     const newLaws: LawDiffEntry[] = []
     const modifiedLaws: LawDiffEntry[] = []
     const removedLaws: LawDiffEntry[] = []
     
     // ハッシュが異なる場合は何らかの変更があったとみなす
     if (previousSnapshot.lawsChecksum !== currentSnapshot.lawsChecksum) {
-      // 実際の実装では、個別の法令を比較して具体的な変更を特定
-      // ここでは簡易的にサンプルデータを生成
-      if (currentSnapshot.totalLawCount > previousSnapshot.totalLawCount) {
-        newLaws.push({
-          lawId: 'sample-new-law-id',
-          name: '新規法令（サンプル）',
-          number: '令和7年法律第X号',
-          category: '労働',
-          changeType: LawRegistryChangeType.NEW,
-          currentValue: '新規追加',
+      // TODO: 実際の差分検知ロジックを実装
+      // 現在は簡易的な実装として、法令数の変化のみを検知
+      // 本番環境では以下の実装が必要:
+      // 1. 前回のスナップショットから個別の法令リストを取得
+      // 2. 現在の法令リストと比較
+      // 3. 新規追加、変更、削除された法令を特定
+      // 4. 各法令の詳細な変更内容を検出
+      
+      this.logger.warn('Detailed change detection not yet implemented', {
+        previousChecksum: previousSnapshot.lawsChecksum,
+        currentChecksum: currentSnapshot.lawsChecksum,
+        previousCount: previousSnapshot.totalLawCount,
+        currentCount: currentSnapshot.totalLawCount
+      })
+      
+      // 法令数の変化を検知（暫定実装）
+      const countDiff = currentSnapshot.totalLawCount - previousSnapshot.totalLawCount
+      if (countDiff !== 0) {
+        const changeDetected: LawDiffEntry = {
+          lawId: 'aggregate-change',
+          name: '法令総数の変化',
+          number: '',
+          category: 'システム',
+          changeType: countDiff > 0 ? LawRegistryChangeType.NEW : LawRegistryChangeType.REMOVED,
+          previousValue: `総数: ${previousSnapshot.totalLawCount}`,
+          currentValue: `総数: ${currentSnapshot.totalLawCount}`,
           detectedAt: new Date()
-        })
+        }
+        
+        if (countDiff > 0) {
+          newLaws.push(changeDetected)
+        } else {
+          removedLaws.push(changeDetected)
+        }
       }
       
-      if (currentSnapshot.totalLawCount < previousSnapshot.totalLawCount) {
-        removedLaws.push({
-          lawId: 'sample-removed-law-id',
-          name: '廃止法令（サンプル）',
-          number: '昭和XX年法律第Y号',
-          category: '一般',
-          changeType: LawRegistryChangeType.REMOVED,
-          previousValue: '廃止',
-          detectedAt: new Date()
-        })
-      }
-      
-      // メタデータの変更があった場合は修正とみなす
+      // メタデータの変更を検知
       if (previousSnapshot.metadata.lastUpdateDate.getTime() !== currentSnapshot.metadata.lastUpdateDate.getTime()) {
         modifiedLaws.push({
-          lawId: 'sample-modified-law-id',
-          name: '変更法令（サンプル）',
-          number: '平成XX年法律第Z号',
-          category: '建築',
+          lawId: 'metadata-change',
+          name: 'メタデータ更新',
+          number: '',
+          category: 'システム',
           changeType: LawRegistryChangeType.MODIFIED,
-          previousValue: '旧版',
-          currentValue: '新版',
+          previousValue: previousSnapshot.metadata.lastUpdateDate.toISOString(),
+          currentValue: currentSnapshot.metadata.lastUpdateDate.toISOString(),
           detectedAt: new Date()
         })
       }
