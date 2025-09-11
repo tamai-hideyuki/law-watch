@@ -3,20 +3,23 @@ import { Result, ok, err } from '../../domain/common/result'
 import { LawRegistrySnapshot, LawRegistryDiff } from '../../domain/monitoring/entities/law-registry-snapshot'
 import { ComprehensiveMonitoring, ComprehensiveMonitoringNotification } from '../../domain/monitoring/entities/comprehensive-monitoring'
 import { LawRegistryRepository } from '../../application/ports/law-registry-repository'
+import { getJapanTimeForDB } from '../utils/timezone'
 
 export class PrismaLawRegistryRepository implements LawRegistryRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async saveLawRegistrySnapshot(snapshot: LawRegistrySnapshot): Promise<Result<void, string>> {
     try {
+      const japanTime = getJapanTimeForDB()
+      
       await this.prisma.lawRegistrySnapshot.create({
         data: {
           id: snapshot.id,
-          snapshotDate: snapshot.snapshotDate,
+          snapshotDate: japanTime, // 日本時間で保存
           totalLawCount: snapshot.totalLawCount,
           lawsChecksum: snapshot.lawsChecksum,
           metadata: snapshot.metadata as any,
-          createdAt: snapshot.createdAt
+          createdAt: japanTime // 日本時間で保存
         }
       })
 
@@ -74,18 +77,21 @@ export class PrismaLawRegistryRepository implements LawRegistryRepository {
 
   async saveLawRegistryDiff(diff: LawRegistryDiff): Promise<Result<void, string>> {
     try {
+      const japanTime = getJapanTimeForDB()
+      
       await this.prisma.lawRegistryDiff.create({
         data: {
           id: `diff-${Date.now()}-${Math.random().toString(36).substring(7)}`,
           previousSnapshotId: diff.previousSnapshotId,
           currentSnapshotId: diff.currentSnapshotId,
-          detectedAt: diff.detectedAt,
+          detectedAt: japanTime, // 日本時間で保存
           diffData: {
             newLaws: diff.newLaws,
             modifiedLaws: diff.modifiedLaws,
             removedLaws: diff.removedLaws
           } as any,
-          summary: diff.summary as any
+          summary: diff.summary as any,
+          createdAt: japanTime // 作成日時も日本時間で保存
         }
       })
 
@@ -120,6 +126,8 @@ export class PrismaLawRegistryRepository implements LawRegistryRepository {
 
   async saveComprehensiveMonitoring(monitoring: ComprehensiveMonitoring): Promise<Result<void, string>> {
     try {
+      const japanTime = getJapanTimeForDB()
+      
       await this.prisma.comprehensiveMonitoring.create({
         data: {
           id: monitoring.id,
@@ -127,9 +135,9 @@ export class PrismaLawRegistryRepository implements LawRegistryRepository {
           name: monitoring.name,
           isActive: monitoring.isActive,
           settings: monitoring.settings as any,
-          createdAt: monitoring.createdAt,
-          updatedAt: monitoring.updatedAt,
-          lastCheckAt: monitoring.lastCheckAt || undefined
+          createdAt: japanTime, // 日本時間で保存
+          updatedAt: japanTime, // 日本時間で保存
+          lastCheckAt: monitoring.lastCheckAt ? japanTime : undefined
         }
       })
 
@@ -189,14 +197,16 @@ export class PrismaLawRegistryRepository implements LawRegistryRepository {
 
   async updateComprehensiveMonitoring(monitoring: ComprehensiveMonitoring): Promise<Result<void, string>> {
     try {
+      const japanTime = getJapanTimeForDB()
+      
       await this.prisma.comprehensiveMonitoring.update({
         where: { id: monitoring.id },
         data: {
           name: monitoring.name,
           isActive: monitoring.isActive,
           settings: monitoring.settings as any,
-          updatedAt: monitoring.updatedAt,
-          lastCheckAt: monitoring.lastCheckAt || undefined
+          updatedAt: japanTime, // 日本時間で更新
+          lastCheckAt: monitoring.lastCheckAt ? japanTime : undefined
         }
       })
 
@@ -220,6 +230,8 @@ export class PrismaLawRegistryRepository implements LawRegistryRepository {
 
   async saveComprehensiveNotification(notification: ComprehensiveMonitoringNotification): Promise<Result<void, string>> {
     try {
+      const japanTime = getJapanTimeForDB()
+      
       await this.prisma.comprehensiveNotification.create({
         data: {
           id: notification.id,
@@ -230,8 +242,8 @@ export class PrismaLawRegistryRepository implements LawRegistryRepository {
           diffData: notification.diff as any,
           notificationType: notification.notificationType,
           isRead: notification.isRead,
-          createdAt: notification.createdAt,
-          readAt: notification.readAt || undefined
+          createdAt: japanTime, // 日本時間で保存
+          readAt: notification.readAt ? japanTime : undefined
         }
       })
 

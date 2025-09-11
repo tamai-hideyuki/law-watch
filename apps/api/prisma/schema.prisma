@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,74 +7,61 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 法令エンティティ
 model Law {
-  id               String   @id // 法令ID (例: "322AC0000000049")
-  name             String   // 法令名
-  number           String   // 法令番号
-  category         String   // カテゴリ (労働、建築、消費者、環境、交通)
-  status           String   // 状態 (active, amended, abolished)
-  promulgationDate DateTime // 公布日
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  // リレーション
-  watchListLaws WatchListLaw[]
-  notifications Notification[]
+  id               String         @id
+  name             String
+  number           String
+  category         String
+  status           String
+  promulgationDate DateTime
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  notifications    Notification[]
+  watchListLaws    WatchListLaw[]
 
   @@map("laws")
 }
 
-// 監視リストエンティティ
 model WatchList {
-  id        String   @id @default(uuid())
-  userId    String   // ユーザーID
-  name      String   // 監視リスト名
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // リレーション
-  laws WatchListLaw[]
+  id        String         @id @default(uuid())
+  userId    String
+  name      String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  laws      WatchListLaw[]
 
   @@index([userId])
   @@map("watch_lists")
 }
 
-// 監視リスト-法令の中間テーブル
 model WatchListLaw {
   watchListId String
   lawId       String
-  addedAt     DateTime @default(now())
-
-  // リレーション
-  watchList WatchList @relation(fields: [watchListId], references: [id], onDelete: Cascade)
-  law       Law       @relation(fields: [lawId], references: [id], onDelete: Cascade)
+  addedAt     DateTime  @default(now())
+  law         Law       @relation(fields: [lawId], references: [id], onDelete: Cascade)
+  watchList   WatchList @relation(fields: [watchListId], references: [id], onDelete: Cascade)
 
   @@id([watchListId, lawId])
   @@map("watch_list_laws")
 }
 
-// 法令変更通知エンティティ
 model Notification {
   id          String    @id @default(uuid())
-  lawId       String    // 対象法令ID
-  userId      String    // 通知対象ユーザーID
-  changeType  String    // 変更種別 (content_updated, status_changed, abolished)
-  title       String    // 通知タイトル
-  description String    // 通知説明
-  isRead      Boolean   @default(false) // 既読フラグ
-  detectedAt  DateTime  // 検知日時
-  readAt      DateTime? // 読了日時
-
-  // リレーション
-  law Law @relation(fields: [lawId], references: [id], onDelete: Cascade)
+  lawId       String
+  userId      String
+  changeType  String
+  title       String
+  description String
+  isRead      Boolean   @default(false)
+  detectedAt  DateTime
+  readAt      DateTime?
+  law         Law       @relation(fields: [lawId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
   @@index([lawId])
   @@map("notifications")
 }
 
-// ユーザーエンティティ（将来の拡張用）
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -88,68 +72,60 @@ model User {
   @@map("users")
 }
 
-// 法令変更履歴（将来の拡張用）
 model LawChangeHistory {
-  id             String   @id @default(uuid())
-  lawId          String   // 対象法令ID
-  changeType     String   // 変更種別
-  changeDetails  String?  // 変更詳細（JSON形式で保存）
-  previousValue  String?  // 変更前の値
-  newValue       String?  // 変更後の値
-  detectedAt     DateTime // 検知日時
-  createdAt      DateTime @default(now())
+  id            String   @id @default(uuid())
+  lawId         String
+  changeType    String
+  changeDetails String?
+  previousValue String?
+  newValue      String?
+  detectedAt    DateTime
+  createdAt     DateTime @default(now())
 
   @@index([lawId])
   @@map("law_change_histories")
 }
 
-// 法令スナップショット（ハッシュによる変更検知用）
 model LawSnapshot {
-  id            String   @id @default(uuid())
-  lawId         String   @unique // 法令ID
-  contentHash   String   // 法令内容のSHA-256ハッシュ
-  metadata      Json?    // メタデータ（名前、番号、カテゴリなど）
-  lastContent   String?  @db.Text // 最後に取得した法令内容（比較用）
-  version       String?  // 法令バージョン
-  lastChecked   DateTime // 最終チェック日時
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(uuid())
+  lawId       String   @unique
+  contentHash String
+  metadata    Json?
+  lastContent String?
+  version     String?
+  lastChecked DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([lawId])
   @@index([lastChecked])
   @@map("law_snapshots")
 }
 
-// 全法令レジストリスナップショット（全法令の状態記録）
 model LawRegistrySnapshot {
-  id              String   @id @default(uuid())
-  snapshotDate    DateTime // スナップショット取得日時
-  totalLawCount   Int      // 総法令数
-  lawsChecksum    String   // 全法令のハッシュ値
-  metadata        Json     // メタデータ（バージョン、更新日時、カテゴリサマリーなど）
-  createdAt       DateTime @default(now())
-
-  // リレーション
-  previousDiffs LawRegistryDiff[] @relation("PreviousSnapshot")
+  id            String            @id @default(uuid())
+  snapshotDate  DateTime
+  totalLawCount Int
+  lawsChecksum  String
+  metadata      Json
+  createdAt     DateTime          @default(now())
   currentDiffs  LawRegistryDiff[] @relation("CurrentSnapshot")
+  previousDiffs LawRegistryDiff[] @relation("PreviousSnapshot")
 
   @@index([snapshotDate])
   @@map("law_registry_snapshots")
 }
 
-// 全法令レジストリ差分（変更検知結果）
 model LawRegistryDiff {
-  id                  String   @id @default(uuid())
-  previousSnapshotId  String   // 前回スナップショットID
-  currentSnapshotId   String   // 現在スナップショットID
-  detectedAt          DateTime // 検知日時
-  diffData            Json     // 差分データ（新規、変更、廃止法令の詳細）
-  summary             Json     // サマリー（件数、影響カテゴリなど）
-  createdAt           DateTime @default(now())
-
-  // リレーション
-  previousSnapshot LawRegistrySnapshot @relation("PreviousSnapshot", fields: [previousSnapshotId], references: [id])
-  currentSnapshot  LawRegistrySnapshot @relation("CurrentSnapshot", fields: [currentSnapshotId], references: [id])
+  id                 String              @id @default(uuid())
+  previousSnapshotId String
+  currentSnapshotId  String
+  detectedAt         DateTime
+  diffData           Json
+  summary            Json
+  createdAt          DateTime            @default(now())
+  currentSnapshot    LawRegistrySnapshot @relation("CurrentSnapshot", fields: [currentSnapshotId], references: [id])
+  previousSnapshot   LawRegistrySnapshot @relation("PreviousSnapshot", fields: [previousSnapshotId], references: [id])
 
   @@index([detectedAt])
   @@index([previousSnapshotId])
@@ -157,18 +133,15 @@ model LawRegistryDiff {
   @@map("law_registry_diffs")
 }
 
-// 包括的法令監視設定
 model ComprehensiveMonitoring {
-  id           String   @id @default(uuid())
-  userId       String   // ユーザーID
-  name         String   // 監視設定名
-  isActive     Boolean  @default(true) // 有効フラグ
-  settings     Json     // 監視設定（対象カテゴリ、通知設定など）
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  lastCheckAt  DateTime? // 最終チェック日時
-
-  // リレーション
+  id            String                      @id @default(uuid())
+  userId        String
+  name          String
+  isActive      Boolean                     @default(true)
+  settings      Json
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+  lastCheckAt   DateTime?
   notifications ComprehensiveNotification[]
 
   @@index([userId])
@@ -177,21 +150,18 @@ model ComprehensiveMonitoring {
   @@map("comprehensive_monitoring")
 }
 
-// 包括的監視通知
 model ComprehensiveNotification {
-  id               String   @id @default(uuid())
-  monitoringId     String   // 監視設定ID
-  userId           String   // ユーザーID
-  title            String   // 通知タイトル
-  summary          String   @db.Text // 通知サマリー
-  diffData         Json     // 差分データ
-  notificationType String   // 通知種別（immediate, daily_summary, weekly_summary）
-  isRead           Boolean  @default(false) // 既読フラグ
-  createdAt        DateTime @default(now())
-  readAt           DateTime? // 読了日時
-
-  // リレーション
-  monitoring ComprehensiveMonitoring @relation(fields: [monitoringId], references: [id], onDelete: Cascade)
+  id               String                  @id @default(uuid())
+  monitoringId     String
+  userId           String
+  title            String
+  summary          String
+  diffData         Json
+  notificationType String
+  isRead           Boolean                 @default(false)
+  createdAt        DateTime                @default(now())
+  readAt           DateTime?
+  monitoring       ComprehensiveMonitoring @relation(fields: [monitoringId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
   @@index([monitoringId])
