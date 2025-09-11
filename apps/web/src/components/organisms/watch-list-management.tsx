@@ -6,15 +6,19 @@ import type { WatchList } from '../../lib/api'
 interface WatchListManagementProps {
   watchLists: WatchList[]
   onDeleteWatchList: (watchListId: string) => void
+  onUpdateWatchListName: (watchListId: string, newName: string) => void
   loading: boolean
 }
 
 export const WatchListManagement = ({ 
   watchLists, 
-  onDeleteWatchList, 
+  onDeleteWatchList,
+  onUpdateWatchListName,
   loading 
 }: WatchListManagementProps) => {
   const [expandedLists, setExpandedLists] = useState<Set<string>>(new Set())
+  const [editingListId, setEditingListId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
 
   const toggleExpanded = (watchListId: string) => {
     const newExpanded = new Set(expandedLists)
@@ -29,6 +33,40 @@ export const WatchListManagement = ({
   const handleDeleteWatchList = (watchList: WatchList) => {
     if (confirm(`監視リスト「${watchList.name}」を削除しますか？\n含まれる${watchList.lawIds.length}件の法令も監視対象から外れます。`)) {
       onDeleteWatchList(watchList.id)
+    }
+  }
+
+  const startEditing = (watchList: WatchList) => {
+    setEditingListId(watchList.id)
+    setEditingName(watchList.name)
+  }
+
+  const cancelEditing = () => {
+    setEditingListId(null)
+    setEditingName('')
+  }
+
+  const saveEditing = (watchListId: string) => {
+    if (!editingName.trim()) {
+      alert('監視リスト名を入力してください')
+      return
+    }
+    
+    if (editingName.trim().length > 100) {
+      alert('監視リスト名は100文字以内で入力してください')
+      return
+    }
+
+    onUpdateWatchListName(watchListId, editingName.trim())
+    setEditingListId(null)
+    setEditingName('')
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent, watchListId: string) => {
+    if (e.key === 'Enter') {
+      saveEditing(watchListId)
+    } else if (e.key === 'Escape') {
+      cancelEditing()
     }
   }
 
@@ -58,7 +96,41 @@ export const WatchListManagement = ({
                 >
                   {expandedLists.has(watchList.id) ? '▼' : '▶'}
                 </button>
-                <h3 className="font-semibold text-lg">{watchList.name}</h3>
+                {editingListId === watchList.id ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, watchList.id)}
+                      className="font-semibold text-lg bg-white border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      autoFocus
+                      maxLength={100}
+                    />
+                    <button
+                      onClick={() => saveEditing(watchList.id)}
+                      className="text-green-600 hover:text-green-700 text-sm font-medium"
+                      title="保存"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={cancelEditing}
+                      className="text-gray-600 hover:text-gray-700 text-sm font-medium"
+                      title="キャンセル"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <h3 
+                    className="font-semibold text-lg cursor-pointer hover:text-blue-600 transition-colors"
+                    onClick={() => startEditing(watchList)}
+                    title="クリックして編集"
+                  >
+                    {watchList.name}
+                  </h3>
+                )}
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
                   {watchList.lawIds.length}件
                 </span>

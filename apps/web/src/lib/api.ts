@@ -136,6 +136,23 @@ export const deleteWatchList = async (watchListId: string, userId: string) => {
   return response.json()
 }
 
+// 監視リスト名更新
+export const updateWatchListName = async (watchListId: string, userId: string, name: string) => {
+  const response = await fetch(`${API_BASE_URL}/monitoring/watch-list/${watchListId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ userId, name })
+  })
+  
+  if (!response.ok) {
+    throw new Error(`Failed to update watch list name: ${response.status}`)
+  }
+  
+  return response.json()
+}
+
 // 複数法令の一括削除
 export const bulkRemoveLaws = async (watchListId: string, lawIds: string[]): Promise<AddLawToWatchListResponse> => {
   const response = await fetch(`${API_BASE_URL}/monitoring/watch/${watchListId}/bulk`, {

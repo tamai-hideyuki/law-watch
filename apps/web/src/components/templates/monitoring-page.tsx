@@ -6,7 +6,7 @@ import { ChangeDetectionButton } from '../molecules/change-detection-button'
 import { EnhancedMonitoredLawsList } from '../organisms/enhanced-monitored-laws-list'
 import { WatchListManagement } from '../organisms/watch-list-management'
 import { WatchListSelector } from '../molecules/watch-list-selector'
-import { getAllLaws, getUserWatchLists, createWatchList, addLawToWatchList, removeLawFromWatchList, deleteWatchList, bulkRemoveLaws } from '../../lib/api'
+import { getAllLaws, getUserWatchLists, createWatchList, addLawToWatchList, removeLawFromWatchList, deleteWatchList, bulkRemoveLaws, updateWatchListName } from '../../lib/api'
 import type { WatchList, LawData } from '../../lib/api'
 
 export const MonitoringPage = () => {
@@ -136,6 +136,20 @@ export const MonitoringPage = () => {
     }
   }
 
+  const handleUpdateWatchListName = async (watchListId: string, newName: string) => {
+    setLoading(true)
+    try {
+      await updateWatchListName(watchListId, userId, newName)
+      await loadData() // データを再読み込み
+      alert('監視リスト名が更新されました')
+    } catch (err) {
+      console.error('Failed to update watch list name:', err)
+      alert('監視リスト名の更新に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleBulkRemove = async (lawIds: string[]) => {
     setLoading(true)
     try {
@@ -219,6 +233,7 @@ export const MonitoringPage = () => {
               <WatchListManagement 
                 watchLists={watchLists} 
                 onDeleteWatchList={handleDeleteWatchList}
+                onUpdateWatchListName={handleUpdateWatchListName}
                 loading={loading}
               />
             )}

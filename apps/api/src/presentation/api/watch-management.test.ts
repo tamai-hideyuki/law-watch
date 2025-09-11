@@ -9,10 +9,14 @@ import { createLawId } from '../../domain/law'
 // Mock dependencies
 const mockWatchListRepository: WatchListRepository = {
   save: vi.fn(),
+  create: vi.fn(),
   findById: vi.fn(),
   findByUserId: vi.fn(),
   findAll: vi.fn(),
-  delete: vi.fn()
+  update: vi.fn(),
+  delete: vi.fn(),
+  addLawToWatchList: vi.fn(),
+  removeLawFromWatchList: vi.fn()
 }
 
 const mockLawRepository: LawRepository = {
@@ -213,6 +217,136 @@ describe('WatchManagementApp', () => {
       expect(res.status).toBe(200)
       expect(data.success).toBe(true)
       expect(data.watchList).toBeDefined()
+    })
+  })
+
+  describe('PUT /monitoring/watch-list/:watchListId', () => {
+    it('should update watch list name successfully', async () => {
+      const originalWatchList = {
+        ...createWatchList({
+          id: 'watch-list-1',
+          userId: 'user-1',
+          name: 'Original Name'
+        }),
+        lawIds: []
+      }
+
+      const updatedWatchList = {
+        ...originalWatchList,
+        name: 'Updated Name',
+        updatedAt: new Date()
+      }
+
+      mockWatchListRepository.findById = vi.fn()
+        .mockResolvedValueOnce(originalWatchList) // for usecase validation
+        .mockResolvedValueOnce(updatedWatchList) // for response
+      mockWatchListRepository.update = vi.fn().mockResolvedValue(undefined)
+
+      const req = new Request('http://localhost/monitoring/watch-list/watch-list-1', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: 'user-1',
+          name: 'Updated Name'
+        })
+      })
+
+      const res = await app.fetch(req)
+      const data = await res.json()
+
+      expect(res.status).toBe(200)
+      expect(data.success).toBe(true)
+      expect(data.message).toBe('Watch list name updated successfully')
+      expect(data.watchList.name).toBe('Updated Name')
+    })
+
+    it('should return 400 for invalid name', async () => {
+      const req = new Request('http://localhost/monitoring/watch-list/watch-list-1', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: 'user-1',
+          name: ''
+        })
+      })
+
+      const res = await app.fetch(req)
+      const data = await res.json()
+
+      expect(res.status).toBe(400)
+      expect(data.error).toContain('name')
+    })
+
+    it('should return 404 for non-existent watch list', async () => {
+      mockWatchListRepository.findById = vi.fn().mockResolvedValue(null)
+
+      const req = new Request('http://localhost/monitoring/watch-list/non-existent', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: 'user-1',
+          name: 'New Name'
+        })
+      })
+
+      const res = await app.fetch(req)
+      const data = await res.json()
+
+      expect(res.status).toBe(404)
+      expect(data.error).toBe('Watch list not found')
+    })
+
+    it('should return 403 for unauthorized user', async () => {
+      const watchList = {
+        ...createWatchList({
+          id: 'watch-list-1',
+          userId: 'owner-user',
+          name: 'Test Watch List'
+        }),
+        lawIds: []
+      }
+
+      mockWatchListRepository.findById = vi.fn().mockResolvedValue(watchList)
+
+      const req = new Request('http://localhost/monitoring/watch-list/watch-list-1', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: 'different-user',
+          name: 'New Name'
+        })
+      })
+
+      const res = await app.fetch(req)
+      const data = await res.json()
+
+      expect(res.status).toBe(403)
+      expect(data.error).toBe('Unauthorized')
+    })
+
+    it('should return 400 for missing watchListId', async () => {
+      const req = new Request('http://localhost/monitoring/watch-list/', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: 'user-1',
+          name: 'New Name'
+        })
+      })
+
+      const res = await app.fetch(req)
+
+      expect(res.status).toBe(404) // Hono returns 404 for missing path params
     })
   })
 })

@@ -5,11 +5,12 @@ import { CreateWatchListUseCase } from '../../application/usecases/create-watch-
 import { RemoveLawFromWatchListUseCase } from '../../application/usecases/remove-law-from-watch-list'
 import { DeleteWatchListUseCase } from '../../application/usecases/delete-watch-list'
 import { BulkRemoveLawsUseCase } from '../../application/usecases/bulk-remove-laws'
+import { UpdateWatchListUseCase } from '../../application/usecases/update-watch-list'
 import { createLawId } from '../../domain/law'
 import type { WatchListRepository } from '../../application/ports/watch-list-repository'
 import type { LawRepository } from '../../application/ports/law-repository'
 import type { EGovApi } from '../../application/ports/e-gov-api'
-import { validateWatchRequest, validateWatchListRequest, handleValidationError } from './validation/request-validator'
+import { validateWatchRequest, validateWatchListRequest, validateUpdateWatchListRequest, handleValidationError } from './validation/request-validator'
 import { successResponse, errorResponse, notFoundResponse, badRequestResponse } from './responses/api-response'
 
 import { SnapshotRepository } from '../../infrastructure/database/prisma-snapshot-repository'
@@ -134,6 +135,56 @@ export const createWatchManagementApp = (
       return successResponse(c, undefined, { watchList })
     } catch (error) {
       logger.error('Create watch list failed', { 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      })
+      return errorResponse(c, 'Internal server error')
+    }
+  })
+
+  // ウォッチリスト名更新
+  app.put('/monitoring/watch-list/:watchListId', async (c) => {
+    try {
+      const watchListId = c.req.param('watchListId')
+      const body = await c.req.json()
+      const validation = validateUpdateWatchListRequest(body)
+      
+      if (!watchListId) {
+        return badRequestResponse(c, 'watchListId is required')
+      }
+      
+      if (!validation.isValid) {
+        return handleValidationError(c, validation)
+      }
+
+      const { userId, name } = body
+      const updateWatchListUseCase = new UpdateWatchListUseCase(watchListRepository)
+      const result = await updateWatchListUseCase.execute(watchListId, userId, name)
+
+      if (!result.success) {
+        if (result.error === 'Watch list not found') {
+          return notFoundResponse(c, 'Watch list')
+        }
+        if (result.error.includes('Unauthorized')) {
+          return c.json({ success: false, error: 'Unauthorized' }, 403)
+        }
+        return badRequestResponse(c, result.error)
+      }
+
+      // 更新後の監視リストを取得して返す
+      const updatedWatchList = await watchListRepository.findById(watchListId)
+      
+      return successResponse(c, undefined, {
+        message: 'Watch list name updated successfully',
+        watchList: {
+          id: updatedWatchList!.id,
+          name: updatedWatchList!.name,
+          lawIds: updatedWatchList!.lawIds,
+          createdAt: updatedWatchList!.createdAt,
+          updatedAt: updatedWatchList!.updatedAt
+        }
+      })
+    } catch (error) {
+      logger.error('Update watch list failed', { 
         error: error instanceof Error ? error.message : 'Unknown error' 
       })
       return errorResponse(c, 'Internal server error')
