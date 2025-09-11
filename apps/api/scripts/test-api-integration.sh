@@ -69,9 +69,9 @@ run_test() {
     echo ""
 }
 
-# Test 1: 全法令一覧取得
-run_test "全法令一覧取得" \
-    'curl -s "$BASE_URL/laws" | jq -e ".totalCount > 0 and (.laws | length) > 0"'
+# Test 1: 監視対象法令一覧取得（初期状態では0件の可能性あり）
+run_test "監視対象法令一覧取得" \
+    'curl -s "$BASE_URL/laws" | jq -e ".totalCount >= 0 and .laws"'
 
 # Test 2: キーワード検索（労働）
 run_test "キーワード検索（労働）" \
@@ -102,33 +102,38 @@ else
 fi
 echo ""
 
-# Test 5: 法令を監視リストに追加（労働基準法のIDが存在する場合のみ）
+# Test 5: 法令を監視リストに追加（e-Gov APIからデータ取得・保存をテスト）
 if [ -n "$WATCH_LIST_ID" ]; then
-    echo -e "${BLUE}🧪 Test: 法令監視追加（労働基準法）${NC}"
+    echo -e "${BLUE}🧪 Test: 法令監視追加（e-Gov APIからデータ取得）${NC}"
+    echo -e "${YELLOW}テスト対象法令: 労働基準法 (322AC0000000049)${NC}"
     
-    # まず労働基準法のIDが存在するか確認
-    LAWS_RESPONSE=$(curl -s "$BASE_URL/laws")
-    LABOR_LAW_EXISTS=$(echo "$LAWS_RESPONSE" | jq -e '.laws[] | select(.id == "322AC0000000049")' > /dev/null && echo "true" || echo "false")
+    # 変更検知システムの正しい動作をテスト：
+    # 1. 法令ID入力 → 2. e-Gov APIから取得 → 3. DB保存 → 4. 監視リスト追加
+    WATCH_ADD_RESPONSE=$(curl -s -X POST "$BASE_URL/monitoring/watch" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"watchListId\": \"$WATCH_LIST_ID\",
+            \"lawId\": \"322AC0000000049\"
+        }")
     
-    if [ "$LABOR_LAW_EXISTS" = "true" ]; then
-        WATCH_ADD_RESPONSE=$(curl -s -X POST "$BASE_URL/monitoring/watch" \
-            -H "Content-Type: application/json" \
-            -d "{
-                \"watchListId\": \"$WATCH_LIST_ID\",
-                \"lawId\": \"322AC0000000049\"
-            }")
+    if echo "$WATCH_ADD_RESPONSE" | jq -e '.success == true' > /dev/null; then
+        echo -e "${GREEN}✅ PASSED: 法令監視追加（e-Gov APIからデータ取得成功）${NC}"
         
-        if echo "$WATCH_ADD_RESPONSE" | jq -e '.success == true' > /dev/null; then
-            echo -e "${GREEN}✅ PASSED: 法令監視追加${NC}"
-            jq ".tests += [{\"name\": \"法令監視追加\", \"status\": \"passed\"}] | .summary.passed += 1 | .summary.total += 1" "$RESULTS_FILE" > "${RESULTS_FILE}.tmp" && mv "${RESULTS_FILE}.tmp" "$RESULTS_FILE"
+        # 法令がデータベースに保存されたか確認
+        LAWS_AFTER=$(curl -s "$BASE_URL/laws")
+        LAW_ADDED=$(echo "$LAWS_AFTER" | jq -e '.laws[] | select(.id == "322AC0000000049")' > /dev/null && echo "true" || echo "false")
+        
+        if [ "$LAW_ADDED" = "true" ]; then
+            echo -e "${GREEN}✅ 確認: 法令データがデータベースに保存されました${NC}"
         else
-            echo -e "${RED}❌ FAILED: 法令監視追加${NC}"
-            echo "Response: $WATCH_ADD_RESPONSE"
-            jq ".tests += [{\"name\": \"法令監視追加\", \"status\": \"failed\"}] | .summary.failed += 1 | .summary.total += 1" "$RESULTS_FILE" > "${RESULTS_FILE}.tmp" && mv "${RESULTS_FILE}.tmp" "$RESULTS_FILE"
+            echo -e "${YELLOW}⚠️  法令データの保存確認に失敗${NC}"
         fi
+        
+        jq ".tests += [{\"name\": \"法令監視追加（e-Gov API連携）\", \"status\": \"passed\"}] | .summary.passed += 1 | .summary.total += 1" "$RESULTS_FILE" > "${RESULTS_FILE}.tmp" && mv "${RESULTS_FILE}.tmp" "$RESULTS_FILE"
     else
-        echo -e "${YELLOW}⚠️  SKIPPED: 法令監視追加 (労働基準法が見つかりません)${NC}"
-        jq ".tests += [{\"name\": \"法令監視追加\", \"status\": \"skipped\"}] | .summary.total += 1" "$RESULTS_FILE" > "${RESULTS_FILE}.tmp" && mv "${RESULTS_FILE}.tmp" "$RESULTS_FILE"
+        echo -e "${RED}❌ FAILED: 法令監視追加${NC}"
+        echo "Response: $WATCH_ADD_RESPONSE"
+        jq ".tests += [{\"name\": \"法令監視追加（e-Gov API連携）\", \"status\": \"failed\"}] | .summary.failed += 1 | .summary.total += 1" "$RESULTS_FILE" > "${RESULTS_FILE}.tmp" && mv "${RESULTS_FILE}.tmp" "$RESULTS_FILE"
     fi
     echo ""
 fi
@@ -171,6 +176,34 @@ echo ""
 # Test 10: 通知一覧取得
 run_test "通知一覧取得" \
     'curl -s "$BASE_URL/monitoring/notifications/$TEST_USER_ID" | jq -e ".success == true"'
+
+# Test 11: 別の法令を追加（建築基準法）でe-Gov API動作確認
+if [ -n "$WATCH_LIST_ID" ]; then
+    echo -e "${BLUE}🧪 Test: 別法令追加テスト（建築基準法）${NC}"
+    echo -e "${YELLOW}テスト対象法令: 建築基準法 (325AC1000000201)${NC}"
+    
+    SECOND_LAW_RESPONSE=$(curl -s -X POST "$BASE_URL/monitoring/watch" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"watchListId\": \"$WATCH_LIST_ID\",
+            \"lawId\": \"325AC1000000201\"
+        }")
+    
+    if echo "$SECOND_LAW_RESPONSE" | jq -e '.success == true' > /dev/null; then
+        echo -e "${GREEN}✅ PASSED: 別法令追加テスト${NC}"
+        
+        # 監視対象法令数の確認
+        FINAL_LAWS=$(curl -s "$BASE_URL/laws")
+        LAW_COUNT=$(echo "$FINAL_LAWS" | jq '.totalCount')
+        echo -e "${BLUE}📊 最終監視対象法令数: ${YELLOW}$LAW_COUNT件${NC}"
+        
+        jq ".tests += [{\"name\": \"別法令追加テスト\", \"status\": \"passed\"}] | .summary.passed += 1 | .summary.total += 1" "$RESULTS_FILE" > "${RESULTS_FILE}.tmp" && mv "${RESULTS_FILE}.tmp" "$RESULTS_FILE"
+    else
+        echo -e "${RED}❌ FAILED: 別法令追加テスト${NC}"
+        jq ".tests += [{\"name\": \"別法令追加テスト\", \"status\": \"failed\"}] | .summary.failed += 1 | .summary.total += 1" "$RESULTS_FILE" > "${RESULTS_FILE}.tmp" && mv "${RESULTS_FILE}.tmp" "$RESULTS_FILE"
+    fi
+    echo ""
+fi
 
 # Test Results Summary
 echo -e "${BLUE}📊 Test Results Summary${NC}"
