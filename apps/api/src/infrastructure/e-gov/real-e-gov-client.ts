@@ -8,6 +8,13 @@ const DEFAULT_E_GOV_API_BASE_URL = 'https://laws.e-gov.go.jp/api/1'
 const DEFAULT_API_TIMEOUT_MS = '10000'
 const DEFAULT_RATE_LIMIT = '100'
 
+// 日本の元号から西暦への変換オフセット
+const ERA_OFFSETS = {
+  SHOWA: 1925,    // 昭和元年 = 1926年（昭和年 + 1925）
+  HEISEI: 1988,   // 平成元年 = 1989年（平成年 + 1988）
+  REIWA: 2018     // 令和元年 = 2019年（令和年 + 2018）
+} as const
+
 interface EGovLawListItem {
   法令ID: string
   法令名: string
@@ -234,14 +241,14 @@ export class RealEGovClient implements EGovApi {
         const month = lawElementMatch[4]
         const day = lawElementMatch[5]
         
-        // 元号を西暦に変換（簡易版）
+        // 元号を西暦に変換
         let westernYear = parseInt(year)
         if (era === 'Showa') {
-          westernYear += 1925
+          westernYear += ERA_OFFSETS.SHOWA
         } else if (era === 'Heisei') {
-          westernYear += 1988
+          westernYear += ERA_OFFSETS.HEISEI
         } else if (era === 'Reiwa') {
-          westernYear += 2018
+          westernYear += ERA_OFFSETS.REIWA
         }
         
         promulgationDate = `${westernYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
