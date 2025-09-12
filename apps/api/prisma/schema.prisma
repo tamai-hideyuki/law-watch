@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Law {
+  id               String         @id
+  name             String
+  number           String
+  category         String
+  status           String
+  promulgationDate DateTime
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  notifications    Notification[]
+  watchListLaws    WatchListLaw[]
+
+  @@map("laws")
+}
+
+model WatchList {
+  id        String         @id @default(uuid())
+  userId    String
+  name      String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  laws      WatchListLaw[]
+
+  @@index([userId])
+  @@map("watch_lists")
+}
+
+model WatchListLaw {
+  watchListId String
+  lawId       String
+  addedAt     DateTime  @default(now())
+  law         Law       @relation(fields: [lawId], references: [id], onDelete: Cascade)
+  watchList   WatchList @relation(fields: [watchListId], references: [id], onDelete: Cascade)
+
+  @@id([watchListId, lawId])
+  @@map("watch_list_laws")
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  lawId       String
+  userId      String
+  changeType  String
+  title       String
+  description String
+  isRead      Boolean   @default(false)
+  detectedAt  DateTime
+  readAt      DateTime?
+  law         Law       @relation(fields: [lawId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([lawId])
+  @@map("notifications")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model LawChangeHistory {
+  id            String   @id @default(uuid())
+  lawId         String
+  changeType    String
+  changeDetails String?
+  previousValue String?
+  newValue      String?
+  detectedAt    DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([lawId])
+  @@map("law_change_histories")
+}
+
+model LawSnapshot {
+  id          String   @id @default(uuid())
+  lawId       String   @unique
+  contentHash String
+  metadata    Json?
+  lastContent String?
+  version     String?
+  lastChecked DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([lawId])
+  @@index([lastChecked])
+  @@map("law_snapshots")
+}
+
+model LawRegistrySnapshot {
+  id            String            @id @default(uuid())
+  snapshotDate  DateTime
+  totalLawCount Int
+  lawsChecksum  String
+  metadata      Json
+  createdAt     DateTime          @default(now())
+  currentDiffs  LawRegistryDiff[] @relation("CurrentSnapshot")
+  previousDiffs LawRegistryDiff[] @relation("PreviousSnapshot")
+
+  @@index([snapshotDate])
+  @@map("law_registry_snapshots")
+}
+
+model LawRegistryDiff {
+  id                 String              @id @default(uuid())
+  previousSnapshotId String
+  currentSnapshotId  String
+  detectedAt         DateTime
+  diffData           Json
+  summary            Json
+  createdAt          DateTime            @default(now())
+  currentSnapshot    LawRegistrySnapshot @relation("CurrentSnapshot", fields: [currentSnapshotId], references: [id])
+  previousSnapshot   LawRegistrySnapshot @relation("PreviousSnapshot", fields: [previousSnapshotId], references: [id])
+
+  @@index([detectedAt])
+  @@index([previousSnapshotId])
+  @@index([currentSnapshotId])
+  @@map("law_registry_diffs")
+}
+
+model ComprehensiveMonitoring {
+  id            String                      @id @default(uuid())
+  userId        String
+  name          String
+  isActive      Boolean                     @default(true)
+  settings      Json
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+  lastCheckAt   DateTime?
+  notifications ComprehensiveNotification[]
+
+  @@index([userId])
+  @@index([isActive])
+  @@index([lastCheckAt])
+  @@map("comprehensive_monitoring")
+}
+
+model ComprehensiveNotification {
+  id               String                  @id @default(uuid())
+  monitoringId     String
+  userId           String
+  title            String
+  summary          String
+  diffData         Json
+  notificationType String
+  isRead           Boolean                 @default(false)
+  createdAt        DateTime                @default(now())
+  readAt           DateTime?
+  monitoring       ComprehensiveMonitoring @relation(fields: [monitoringId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([monitoringId])
+  @@index([createdAt])
+  @@map("comprehensive_notifications")
+}
