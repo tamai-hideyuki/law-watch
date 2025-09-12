@@ -2,16 +2,17 @@ import { Hono } from 'hono'
 import { validateRequired, ValidationError } from './validation/request-validator'
 import { successResponse, errorResponse } from './responses/api-response'
 import { ComprehensiveLawMonitoringUseCaseImpl } from '../../application/usecases/comprehensive-law-monitoring'
-import { MockEGovClient } from '../../infrastructure/e-gov/mock-e-gov-client'
+import { RealEGovClient } from '../../infrastructure/e-gov/real-e-gov-client'
 import { PrismaLawRegistryRepository } from '../../infrastructure/persistence/prisma-law-registry-repository'
 import { PrismaNotificationRepository } from '../../infrastructure/database/prisma-notification-repository'
 import { PrismaClient } from '@prisma/client'
+import { getJapanTimeFormatted } from '../../infrastructure/utils/timezone'
 
 const app = new Hono()
 
 // 依存性注入
 const prisma = new PrismaClient()
-const eGovClient = new MockEGovClient()
+const eGovClient = new RealEGovClient()
 const lawRegistryRepository = new PrismaLawRegistryRepository(prisma)
 const notificationRepository = new PrismaNotificationRepository(prisma)
 
@@ -146,32 +147,63 @@ app.put('/notifications/:notificationId/read', async (c) => {
   }
 })
 
-// 法令変更シミュレーション（テスト用）
-app.post('/simulate-change', async (c) => {
+// フルスキャン実行（実際のe-Gov APIからデータベースに保存）
+app.post('/scan', async (c) => {
   try {
-    eGovClient.simulateChange()
-    
-    return successResponse(c, { 
-      message: '法令変更をシミュレートしました。次回の包括的監視で変更が検知されます。',
-      simulated: true
-    })
+    const result = await comprehensiveLawMonitoringUseCase.executeComprehensiveCheck()
+
+    if (!result.success) {
+      return errorResponse(c, result.error, 500)
+    }
+
+    const responseData = {
+      executed: true,
+      detectedChanges: result.data !== null,
+      diff: result.data,
+      message: '全法令スキャンが完了し、データベースに保存されました',
+      executedAt: getJapanTimeFormatted(), // 実行時刻を日本時間で表示
+      timezone: 'Asia/Tokyo (JST)'
+    }
+
+    return successResponse(c, responseData)
   } catch (error) {
-    console.error('変更シミュレーションエラー:', error)
+    console.error('フルスキャンエラー:', error)
     return errorResponse(c, '内部サーバーエラー', 500)
   }
 })
 
-// 変更シミュレーションのリセット（テスト用）
-app.post('/reset-changes', async (c) => {
+// 最近の変更差分取得（詳細版）
+app.get('/diffs', async (c) => {
   try {
-    eGovClient.resetChanges()
-    
-    return successResponse(c, { 
-      message: '法令変更シミュレーションをリセットしました。',
-      reset: true
-    })
+    const limit = parseInt(c.req.query('limit') || '10')
+    const result = await lawRegistryRepository.getRecentDiffs(limit)
+
+    if (!result.success) {
+      return errorResponse(c, result.error, 500)
+    }
+
+    const responseData = {
+      diffs: result.data,
+      count: result.data.length,
+      retrievedAt: getJapanTimeFormatted(),
+      timezone: 'Asia/Tokyo (JST)'
+    }
+
+    return successResponse(c, responseData)
   } catch (error) {
-    console.error('変更リセットエラー:', error)
+    console.error('差分取得エラー:', error)
+    return errorResponse(c, '内部サーバーエラー', 500)
+  }
+})
+
+// 特定の差分詳細取得
+app.get('/diffs/:diffId', async (c) => {
+  try {
+    const diffId = c.req.param('diffId')
+    // TODO: 実装時はgetDiffByIdメソッドを追加
+    return errorResponse(c, '機能は実装予定です', 501)
+  } catch (error) {
+    console.error('差分詳細取得エラー:', error)
     return errorResponse(c, '内部サーバーエラー', 500)
   }
 })

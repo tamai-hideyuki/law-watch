@@ -12,7 +12,9 @@
     "test:quick": "./scripts/quick-test.sh"
   },
   "devDependencies": {
+    "@types/node-fetch": "^2.6.13",
     "@types/nodemailer": "^7.0.1",
+    "@types/xml2js": "^0.4.14",
     "@vitest/ui": "^3.2.4",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
@@ -22,7 +24,9 @@
     "@prisma/client": "^6.15.0",
     "dotenv": "^17.2.2",
     "hono": "^4.9.6",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.6",
-    "prisma": "^6.15.0"
+    "prisma": "^6.15.0",
+    "xml2js": "^0.6.2"
   }
 }

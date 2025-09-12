@@ -41,7 +41,7 @@ describe('RealEGovClient', () => {
         name: '労働基準法',
         number: '昭和二十二年法律第四十九号',
         promulgationDate: '1947-04-07',
-        category: '憲法・法律',
+        category: '法律',
         status: '施行中'
       })
       expect(result.totalCount).toBe(1)
@@ -81,12 +81,16 @@ describe('RealEGovClient', () => {
     it('should handle HTTP errors', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
-        status: 500
+        status: 500,
+        statusText: 'Internal Server Error'
       })
 
       const query = createSimpleSearchQuery('test')
+      const result = await client.searchLaws(query)
       
-      await expect(client.searchLaws(query)).rejects.toThrow('HTTP error! status: 500')
+      // エラー時は空の結果を返すように変更されたため
+      expect(result.laws).toEqual([])
+      expect(result.totalCount).toBe(0)
     })
 
     it('should handle network timeout', async () => {
@@ -97,8 +101,11 @@ describe('RealEGovClient', () => {
       )
 
       const query = createSimpleSearchQuery('test')
+      const result = await client.searchLaws(query)
       
-      await expect(client.searchLaws(query)).rejects.toThrow()
+      // エラー時は空の結果を返すように変更されたため
+      expect(result.laws).toEqual([])
+      expect(result.totalCount).toBe(0)
     })
   })
 

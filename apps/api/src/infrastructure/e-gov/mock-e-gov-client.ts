@@ -224,7 +224,9 @@ export class MockEGovClient implements EGovApi {
       laws: uniqueLaws,
       totalCount: uniqueLaws.length,
       lastUpdated: new Date(),
-      version: this.hasChanges ? '2025.1.1' : '2025.1.0'
+      version: this.hasChanges ? '2025.1.1' : '2025.1.0',
+      success: true,
+      error: ''
     }
   }
 }
