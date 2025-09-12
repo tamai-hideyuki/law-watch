@@ -277,11 +277,3 @@ export LOG_LEVEL=DEBUG  # DEBUG, INFO, WARN, ERROR
   npx prisma studio
   - データベース内容を確認・編集するGUI（ポート5555）
 
-  システム構成
-
-  起動後のアクセス先：
-  - Webアプリ: http://localhost:3001
-  - API サーバー: http://localhost:3000
-  - Prisma Studio: http://localhost:5555
-  - PostgreSQL: localhost:5432
-  
