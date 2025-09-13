@@ -251,9 +251,7 @@ export LOG_LEVEL=DEBUG  # DEBUG, INFO, WARN, ERROR
 - 変更内容詳細比較機能
 - フロントエンド完全型安全化
 
-## ライセンス
 
-このプロジェクトは[LICENSE](LICENSE)の下で公開されています。
 
 ---
 
