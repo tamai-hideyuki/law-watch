@@ -257,8 +257,6 @@ export LOG_LEVEL=DEBUG  # DEBUG, INFO, WARN, ERROR
 
 ---
 
-**Law Watch** - 法的変化の早期発見による社会の安全性向上を目指して
-
 
   必須コマンド
 
