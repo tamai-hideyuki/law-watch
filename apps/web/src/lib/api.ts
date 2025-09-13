@@ -7,6 +7,7 @@ export interface LawData {
   category: string
   status: string
   promulgationDate: string
+  detailUrl: string
 }
 
 export interface SearchResponse {
