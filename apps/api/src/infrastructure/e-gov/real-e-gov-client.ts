@@ -274,19 +274,24 @@ export class RealEGovClient implements EGovApi {
       // 実際のe-Gov API法令詳細の構造に対応
       const lawNumber = this.extractXmlValue(xmlText, 'LawNum') || ''
       const lawTitle = this.extractXmlValue(xmlText, 'LawTitle') || ''
-      
-      // Law要素から属性を抽出
-      const lawElementMatch = xmlText.match(/<Law[^>]+Era="([^"]*)"[^>]+Year="([^"]*)"[^>]+Num="([^"]*)"[^>]+PromulgateMonth="([^"]*)"[^>]+PromulgateDay="([^"]*)"/)
-      
+
+      // Law要素から属性を抽出（属性の順序に依存しない改良版）
       let promulgationDate = ''
-      if (lawElementMatch) {
-        const era = lawElementMatch[1]
-        const year = lawElementMatch[2]
-        const month = lawElementMatch[4]
-        const day = lawElementMatch[5]
-        
+
+      // Era属性を個別に抽出
+      const eraMatch = xmlText.match(/<Law[^>]*\sEra="([^"]*)"/)
+      const yearMatch = xmlText.match(/<Law[^>]*\sYear="([^"]*)"/)
+      const monthMatch = xmlText.match(/<Law[^>]*\sPromulgateMonth="([^"]*)"/)
+      const dayMatch = xmlText.match(/<Law[^>]*\sPromulgateDay="([^"]*)"/)
+
+      if (eraMatch && yearMatch && monthMatch && dayMatch) {
+        const era = eraMatch[1]
+        const year = parseInt(yearMatch[1])
+        const month = monthMatch[1]
+        const day = dayMatch[1]
+
         // 元号を西暦に変換
-        let westernYear = parseInt(year)
+        let westernYear = year
         if (era === 'Showa') {
           westernYear += ERA_OFFSETS.SHOWA
         } else if (era === 'Heisei') {
@@ -294,8 +299,18 @@ export class RealEGovClient implements EGovApi {
         } else if (era === 'Reiwa') {
           westernYear += ERA_OFFSETS.REIWA
         }
-        
+
         promulgationDate = `${westernYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+      } else {
+        // 日付が取得できない場合はデフォルト値を使用
+        this.logger.warn('Could not extract promulgation date from XML', {
+          lawId,
+          hasEra: !!eraMatch,
+          hasYear: !!yearMatch,
+          hasMonth: !!monthMatch,
+          hasDay: !!dayMatch
+        })
+        promulgationDate = '1970-01-01' // デフォルト日付
       }
 
       return {
