@@ -1,5 +1,6 @@
 import { LawRepository } from '../ports/law-repository'
 import { createLogger } from '../../infrastructure/logging/logger'
+import { EGovUrlBuilder } from '../../domain/law/services/e-gov-url-builder'
 
 export interface MonitoredLawData {
   id: string
@@ -8,6 +9,7 @@ export interface MonitoredLawData {
   category: string
   status: string
   promulgationDate: string
+  detailUrl: string
 }
 
 export interface GetMonitoredLawsResult {
@@ -35,7 +37,8 @@ export class GetMonitoredLawsUseCase {
       number: law.number,
       category: law.category,
       status: law.status,
-      promulgationDate: law.promulgationDate.toISOString()
+      promulgationDate: law.promulgationDate.toISOString(),
+      detailUrl: EGovUrlBuilder.buildLawDetailUrlFromString(law.id)
     }))
 
     this.logger.info('Retrieved monitored laws', { count: monitoredLaws.length })

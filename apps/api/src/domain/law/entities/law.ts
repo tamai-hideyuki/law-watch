@@ -7,6 +7,7 @@ import {
     createLawStatus,
     isActiveLaw
 } from '../value-objects'
+import { EGovUrlBuilder } from '../services/e-gov-url-builder'
 
 export interface Law {
   readonly id: LawId
@@ -54,4 +55,13 @@ export const getLawAge = (law: Law): number => {
   const now = new Date()
   const diffTime = now.getTime() - law.promulgationDate.getTime()
   return Math.floor(diffTime / (1000 * 60 * 60 * 24 * 365))
+}
+
+/**
+ * 法令のe-Gov法令検索詳細ページURLを取得
+ * @param law 法令エンティティ
+ * @returns e-Gov法令検索の詳細ページURL
+ */
+export const getLawDetailUrl = (law: Law): string => {
+  return EGovUrlBuilder.buildLawDetailUrl(law.id)
 }
