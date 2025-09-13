@@ -97,5 +97,46 @@ export const createNotificationManagementApp = (
     }
   })
 
+  // 変更リセット用エンドポイント（テスト用）
+  app.post('/monitoring/reset-changes', async (c) => {
+    try {
+      // EGovApiクライアントで変更をリセット
+      if ('resetChanges' in egovApi) {
+        (egovApi as { resetChanges: () => void }).resetChanges()
+      }
+
+      return successResponse(c, undefined, {
+        message: 'Law changes reset'
+      })
+    } catch (error) {
+      logger.error('Reset changes failed', { 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      })
+      return errorResponse(c, 'Internal server error')
+    }
+  })
+
+  // 通知を既読にマーク
+  app.put('/monitoring/notifications/:notificationId/read', async (c) => {
+    try {
+      const notificationId = c.req.param('notificationId')
+
+      if (!notificationId) {
+        return badRequestResponse(c, 'notificationId is required')
+      }
+
+      // 通知を既読にマーク（実装はモック）
+      return successResponse(c, undefined, {
+        message: 'Notification marked as read',
+        notificationId
+      })
+    } catch (error) {
+      logger.error('Mark notification as read failed', { 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      })
+      return errorResponse(c, 'Internal server error')
+    }
+  })
+
   return app
 }

@@ -41,8 +41,8 @@ export function ComprehensiveMonitoringDashboard() {
   const fetchData = async () => {
     try {
       const [monitoringResponse, notificationResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/comprehensive/user/user-001`),
-        fetch(`${API_BASE_URL}/comprehensive/notifications/user-001`)
+        fetch(`${API_BASE_URL}/monitoring/watch/user-001`),
+        fetch(`${API_BASE_URL}/monitoring/notifications/user-001`)
       ])
 
       if (monitoringResponse.ok) {
@@ -69,7 +69,7 @@ export function ComprehensiveMonitoringDashboard() {
     setError('')
 
     try {
-      const response = await fetch(`${API_BASE_URL}/comprehensive/create`, {
+      const response = await fetch(`${API_BASE_URL}/monitoring/watch-list`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ export function ComprehensiveMonitoringDashboard() {
 
   // 監視実行
   const handleExecuteCheck = async () => {
-    const response = await fetch(`${API_BASE_URL}/comprehensive/execute`, {
+    const response = await fetch(`${API_BASE_URL}/monitoring/detect-changes`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ export function ComprehensiveMonitoringDashboard() {
 
   // 変更シミュレート
   const handleSimulateChange = async () => {
-    const response = await fetch(`${API_BASE_URL}/comprehensive/simulate-change`, {
+    const response = await fetch(`${API_BASE_URL}/monitoring/simulate-change`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ export function ComprehensiveMonitoringDashboard() {
 
   // 変更リセット
   const handleResetChanges = async () => {
-    const response = await fetch(`${API_BASE_URL}/comprehensive/reset-changes`, {
+    const response = await fetch(`${API_BASE_URL}/monitoring/reset-changes`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ export function ComprehensiveMonitoringDashboard() {
   // 通知を既読にマーク
   const markAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/comprehensive/notifications/${notificationId}/read`, {
+      const response = await fetch(`${API_BASE_URL}/monitoring/notifications/${notificationId}/read`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
