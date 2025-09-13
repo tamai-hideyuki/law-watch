@@ -30,7 +30,18 @@ export const MonitoredLawsList = ({ laws, onRemove }: MonitoredLawsListProps) =>
         <div key={law.id} className="border rounded-lg p-4 bg-gray-50">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <h3 className="font-semibold text-lg text-blue-600">{law.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-lg text-blue-600">{law.name}</h3>
+                <a
+                  href={law.detailUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded transition-colors"
+                  title="e-Gov法令検索で詳細を確認"
+                >
+                  📋 詳細
+                </a>
+              </div>
               <p className="text-gray-600 text-sm">ID: {law.id}</p>
               <p className="text-gray-600">{law.number}</p>
               <div className="flex gap-2 mt-2">
