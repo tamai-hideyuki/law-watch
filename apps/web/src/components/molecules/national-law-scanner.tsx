@@ -179,7 +179,7 @@ export const NationalLawScanner = () => {
       {/* スキャン結果表示 */}
       {scanResult && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h3 className="font-medium text-gray-900 mb-3">📊 スキャン結果</h3>
+          <h3 className="font-medium text-gray-900 mb-3">スキャン結果</h3>
           
           {scanResult.status === 'STARTED' ? (
             <div className="text-blue-600">

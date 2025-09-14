@@ -55,7 +55,7 @@ export const MonitoringPage = () => {
     setLoading(true)
     try {
       await addLawToWatchList(watchListId, selectedLawId)
-      await loadData() // データを再読み込み
+      await loadData()
       setSelectedLawId('')
       setShowSelector(false)
       alert('法令が監視対象に追加されました')
@@ -76,7 +76,7 @@ export const MonitoringPage = () => {
       const newWatchList = response.watchList
       
       await addLawToWatchList(newWatchList.id, selectedLawId)
-      await loadData() // データを再読み込み
+      await loadData()
       setSelectedLawId('')
       setShowSelector(false)
       alert('新しい監視リストが作成され、法令が追加されました')
@@ -95,7 +95,6 @@ export const MonitoringPage = () => {
 
     setLoading(true)
     try {
-      // 監視リストから削除
       const listsWithLaw = watchLists.filter(list => list.lawIds.includes(law.id))
       if (listsWithLaw.length > 0) {
         await Promise.all(
@@ -103,7 +102,6 @@ export const MonitoringPage = () => {
         )
       }
       
-      // 法令データ自体も削除（監視リストに含まれていない場合も削除可能）
       const response = await fetch(`${API_BASE_URL}/laws/${law.id}`, {
         method: 'DELETE',
       })
@@ -112,7 +110,7 @@ export const MonitoringPage = () => {
         throw new Error('Failed to delete law')
       }
       
-      await loadData() // データを再読み込み
+      await loadData()
       alert('法令が監視対象から削除されました')
     } catch (err) {
       console.error('Failed to remove from monitoring:', err)
@@ -126,7 +124,7 @@ export const MonitoringPage = () => {
     setLoading(true)
     try {
       await deleteWatchList(watchListId, userId)
-      await loadData() // データを再読み込み
+      await loadData()
       alert('監視リストが削除されました')
     } catch (err) {
       console.error('Failed to delete watch list:', err)
@@ -140,7 +138,7 @@ export const MonitoringPage = () => {
     setLoading(true)
     try {
       await updateWatchListName(watchListId, userId, newName)
-      await loadData() // データを再読み込み
+      await loadData()
       alert('監視リスト名が更新されました')
     } catch (err) {
       console.error('Failed to update watch list name:', err)
@@ -153,7 +151,6 @@ export const MonitoringPage = () => {
   const handleBulkRemove = async (lawIds: string[]) => {
     setLoading(true)
     try {
-      // 各法令について、含まれる監視リストから削除
       for (const lawId of lawIds) {
         const listsWithLaw = watchLists.filter(list => list.lawIds.includes(lawId))
         if (listsWithLaw.length > 0) {
@@ -162,13 +159,12 @@ export const MonitoringPage = () => {
           )
         }
         
-        // 法令データ自体も削除
         await fetch(`${API_BASE_URL}/laws/${lawId}`, {
           method: 'DELETE',
         })
       }
       
-      await loadData() // データを再読み込み
+      await loadData()
       alert(`${lawIds.length}件の法令が監視対象から削除されました`)
     } catch (err) {
       console.error('Failed to bulk remove laws:', err)
@@ -185,7 +181,6 @@ export const MonitoringPage = () => {
           <h1 className="text-3xl font-bold text-gray-900">Law Watch</h1>
           <p className="mt-2 text-gray-600">法的変化の早期発見による社会の安全性向上システム</p>
         </div>
-        
         <div className="space-y-6">
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">法令監視対象追加</h2>
@@ -204,6 +199,23 @@ export const MonitoringPage = () => {
             </p>
             <ChangeDetectionButton onDetectionComplete={() => loadData()} />
           </div>
+          
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">監視リスト管理</h2>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">読み込み中...</p>
+              </div>
+            ) : (
+              <WatchListManagement 
+                watchLists={watchLists} 
+                onDeleteWatchList={handleDeleteWatchList}
+                onUpdateWatchListName={handleUpdateWatchListName}
+                loading={loading}
+              />
+            )}
+          </div>
 
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">監視中の法令</h2>
@@ -217,23 +229,6 @@ export const MonitoringPage = () => {
                 laws={monitoredLaws} 
                 onRemove={handleRemoveFromMonitoring}
                 onBulkRemove={handleBulkRemove}
-                loading={loading}
-              />
-            )}
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">監視リスト管理</h2>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2 text-gray-600">読み込み中...</p>
-              </div>
-            ) : (
-              <WatchListManagement 
-                watchLists={watchLists} 
-                onDeleteWatchList={handleDeleteWatchList}
-                onUpdateWatchListName={handleUpdateWatchListName}
                 loading={loading}
               />
             )}

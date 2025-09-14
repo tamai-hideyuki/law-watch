@@ -14,7 +14,7 @@ export const LawIdInput = ({ onSubmit, loading = false }: LawIdInputProps) => {
     e.preventDefault()
     if (lawId.trim() && !loading) {
       onSubmit(lawId.trim())
-      setLawId('') // 入力をクリア
+      setLawId('')
     }
   }
 
