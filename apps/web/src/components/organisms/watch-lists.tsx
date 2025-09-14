@@ -13,7 +13,6 @@ export const WatchLists = () => {
     try {
       await removeLawFromWatchList(watchListId, lawId)
       alert('法令を監視リストから削除しました')
-      // ページをリロードして最新状態を取得
       window.location.reload()
     } catch (error) {
       alert('削除に失敗しました')

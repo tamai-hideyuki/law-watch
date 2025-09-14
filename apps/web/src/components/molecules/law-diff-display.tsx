@@ -109,7 +109,6 @@ export const LawDiffDisplay: React.FC<LawDiffDisplayProps> = ({ diff }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* ヘッダー */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-4">法令変更差分レポート</h2>
         <div className="bg-blue-50 p-4 rounded-lg">
@@ -121,9 +120,8 @@ export const LawDiffDisplay: React.FC<LawDiffDisplayProps> = ({ diff }) => {
         </div>
       </div>
 
-      {/* サマリー */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold mb-4">📊 変更サマリー</h3>
+        <h3 className="text-lg font-semibold mb-4">変更サマリー</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-green-50 p-4 rounded-lg">
             <div className="text-2xl font-bold text-green-600">{diff.summary.totalNew}</div>
@@ -152,12 +150,10 @@ export const LawDiffDisplay: React.FC<LawDiffDisplayProps> = ({ diff }) => {
         )}
       </div>
 
-      {/* 詳細セクション */}
       <DiffSection title="🆕 新規法令" laws={diff.newLaws} icon="🆕" />
       <DiffSection title="📝 変更法令" laws={diff.modifiedLaws} icon="📝" />
       <DiffSection title="❌ 廃止法令" laws={diff.removedLaws} icon="❌" />
 
-      {/* 変更がない場合 */}
       {diff.summary.totalNew === 0 && diff.summary.totalModified === 0 && diff.summary.totalRemoved === 0 && (
         <div className="text-center py-12">
           <div className="text-4xl mb-4">✅</div>

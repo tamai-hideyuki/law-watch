@@ -49,11 +49,11 @@ export const ChangeDetectionButton = ({ onDetectionComplete }: ChangeDetectionBu
       if (result.notifications.length > 0) {
         alert(`🚨 ${result.notifications.length}件の法令変更を検出しました！\n\n${result.notifications.map(n => `• ${n.title}`).join('\n')}`)
       } else {
-        alert('✅ 監視中の法令に変更はありませんでした')
+        alert('監視中の法令に変更はありませんでした')
       }
     } catch (error) {
       console.error('Change detection failed:', error)
-      alert(`❌ 変更検知に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
+      alert(`変更検知に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
     } finally {
       setLoading(false)
     }
@@ -78,7 +78,7 @@ export const ChangeDetectionButton = ({ onDetectionComplete }: ChangeDetectionBu
             変更を検知中...
           </div>
         ) : (
-          '🔍 法令変更を検知'
+          '法令変更を検知'
         )}
       </button>
       

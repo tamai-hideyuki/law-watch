@@ -39,7 +39,7 @@ export const MonitoredLawsList = ({ laws, onRemove }: MonitoredLawsListProps) =>
                   className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded transition-colors"
                   title="e-Gov法令検索で詳細を確認"
                 >
-                  📋 詳細
+                  詳細
                 </a>
               </div>
               <p className="text-gray-600 text-sm">ID: {law.id}</p>

@@ -70,7 +70,7 @@ export function ComprehensiveMonitoringControl({
     if (!lastResult.detectedChanges) {
       return (
         <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-          <h3 className="text-sm font-medium text-green-900 mb-2">✅ 監視実行完了</h3>
+          <h3 className="text-sm font-medium text-green-900 mb-2">監視実行完了</h3>
           <p className="text-sm text-green-800">法令に変更はありませんでした。</p>
         </div>
       )
@@ -81,7 +81,7 @@ export function ComprehensiveMonitoringControl({
 
     return (
       <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
-        <h3 className="text-sm font-medium text-orange-900 mb-2">🔔 法令変更を検知しました</h3>
+        <h3 className="text-sm font-medium text-orange-900 mb-2">法令変更を検知しました</h3>
         
         {summary && (
           <div className="space-y-2">
@@ -151,21 +151,19 @@ export function ComprehensiveMonitoringControl({
       <h2 className="text-xl font-semibold text-gray-900 mb-6">全法令監視制御</h2>
       
       <div className="space-y-4">
-        {/* メイン実行ボタン */}
         <div>
           <Button
             onClick={handleExecuteCheck}
             disabled={isLoading || isChecking}
             className="w-full bg-blue-600 hover:bg-blue-700"
           >
-            {isChecking ? '監視実行中...' : '🔍 全法令変更検知を実行'}
+            {isChecking ? '監視実行中...' : '全法令変更検知を実行'}
           </Button>
           <p className="text-sm text-gray-600 mt-2">
             全法令データベースをチェックして新規追加・変更・廃止を検知します
           </p>
         </div>
 
-        {/* テスト用コントロール */}
         <div className="border-t pt-4">
           <h3 className="text-lg font-medium text-gray-900 mb-3">テスト用機能</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -175,7 +173,7 @@ export function ComprehensiveMonitoringControl({
               variant="outline"
               className="border-orange-300 text-orange-700 hover:bg-orange-50"
             >
-              {isSimulating ? 'シミュレート中...' : '📝 変更をシミュレート'}
+              {isSimulating ? 'シミュレート中...' : '変更をシミュレート'}
             </Button>
             <Button
               onClick={handleResetChanges}
@@ -183,7 +181,7 @@ export function ComprehensiveMonitoringControl({
               variant="outline"
               className="border-gray-300 text-gray-700 hover:bg-gray-50"
             >
-              {isResetting ? 'リセット中...' : '🔄 変更をリセット'}
+              {isResetting ? 'リセット中...' : '変更をリセット'}
             </Button>
           </div>
           <p className="text-sm text-gray-600 mt-2">

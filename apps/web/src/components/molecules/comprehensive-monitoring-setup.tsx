@@ -60,7 +60,7 @@ export function ComprehensiveMonitoringSetup({ onSetup, isLoading }: Comprehensi
 
     try {
       await onSetup({
-        userId: 'user-001', // 固定値
+        userId: 'user-001',
         name: name.trim(),
         targetCategories: selectedCategories.length > 0 ? selectedCategories : undefined,
         notifyOnNew,
@@ -68,7 +68,6 @@ export function ComprehensiveMonitoringSetup({ onSetup, isLoading }: Comprehensi
         notifyOnRemoved
       })
 
-      // 成功時は入力をクリア
       setName('')
       setSelectedCategories([])
       setNotifyOnNew(true)
@@ -84,7 +83,6 @@ export function ComprehensiveMonitoringSetup({ onSetup, isLoading }: Comprehensi
       <h2 className="text-xl font-semibold text-gray-900 mb-6">全法令監視設定</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 監視設定名 */}
         <div>
           <label htmlFor="monitoring-name" className="block text-sm font-medium text-gray-700 mb-2">
             監視設定名 <span className="text-red-500">*</span>
@@ -100,7 +98,6 @@ export function ComprehensiveMonitoringSetup({ onSetup, isLoading }: Comprehensi
           />
         </div>
 
-        {/* 対象カテゴリ */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
             監視対象カテゴリ
@@ -125,7 +122,6 @@ export function ComprehensiveMonitoringSetup({ onSetup, isLoading }: Comprehensi
           </div>
         </div>
 
-        {/* 通知設定 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
             通知する変更種別

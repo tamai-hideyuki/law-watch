@@ -37,12 +37,11 @@ export function ComprehensiveMonitoringDashboard() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // データ取得
   const fetchData = async () => {
     try {
       const [monitoringResponse, notificationResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/comprehensive/user/user-001`),
-        fetch(`${API_BASE_URL}/comprehensive/notifications/user-001`)
+        fetch(`${API_BASE_URL}/monitoring/watch/user-001`),
+        fetch(`${API_BASE_URL}/monitoring/notifications/user-001`)
       ])
 
       if (monitoringResponse.ok) {
@@ -63,13 +62,12 @@ export function ComprehensiveMonitoringDashboard() {
     fetchData()
   }, [])
 
-  // 包括的監視の作成
   const handleSetup = async (params: ComprehensiveMonitoringParams) => {
     setIsLoading(true)
     setError('')
 
     try {
-      const response = await fetch(`${API_BASE_URL}/comprehensive/create`, {
+      const response = await fetch(`${API_BASE_URL}/monitoring/watch-list`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +80,7 @@ export function ComprehensiveMonitoringDashboard() {
         throw new Error(errorData.error || '設定の作成に失敗しました')
       }
 
-      await fetchData() // データを再取得
+      await fetchData()
     } catch (err) {
       setError(err instanceof Error ? err.message : '設定の作成に失敗しました')
       throw err
@@ -91,9 +89,8 @@ export function ComprehensiveMonitoringDashboard() {
     }
   }
 
-  // 監視実行
   const handleExecuteCheck = async () => {
-    const response = await fetch(`${API_BASE_URL}/comprehensive/execute`, {
+    const response = await fetch(`${API_BASE_URL}/monitoring/detect-changes`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -106,13 +103,12 @@ export function ComprehensiveMonitoringDashboard() {
     }
 
     const result = await response.json()
-    await fetchData() // 通知データを再取得
+    await fetchData()
     return result.data
   }
 
-  // 変更シミュレート
   const handleSimulateChange = async () => {
-    const response = await fetch(`${API_BASE_URL}/comprehensive/simulate-change`, {
+    const response = await fetch(`${API_BASE_URL}/monitoring/simulate-change`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -125,9 +121,8 @@ export function ComprehensiveMonitoringDashboard() {
     }
   }
 
-  // 変更リセット
   const handleResetChanges = async () => {
-    const response = await fetch(`${API_BASE_URL}/comprehensive/reset-changes`, {
+    const response = await fetch(`${API_BASE_URL}/monitoring/reset-changes`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -140,10 +135,9 @@ export function ComprehensiveMonitoringDashboard() {
     }
   }
 
-  // 通知を既読にマーク
   const markAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/comprehensive/notifications/${notificationId}/read`, {
+      const response = await fetch(`${API_BASE_URL}/monitoring/notifications/${notificationId}/read`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +145,7 @@ export function ComprehensiveMonitoringDashboard() {
       })
 
       if (response.ok) {
-        await fetchData() // 通知データを再取得
+        await fetchData()
       }
     } catch (err) {
       console.error('既読マークエラー:', err)
@@ -160,7 +154,6 @@ export function ComprehensiveMonitoringDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* ヘッダー */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">全法令監視システム</h1>
         <p className="text-gray-600">
@@ -168,19 +161,16 @@ export function ComprehensiveMonitoringDashboard() {
         </p>
       </div>
 
-      {/* 全法令スキャナー */}
       <div className="max-w-4xl mx-auto">
         <NationalLawScanner />
       </div>
 
-      {/* エラー表示 */}
       {error && (
         <div className="text-red-600 text-sm bg-red-50 p-3 rounded border border-red-200 max-w-2xl mx-auto">
           {error}
         </div>
       )}
 
-      {/* 現在の監視設定 */}
       {monitorings.length > 0 && (
         <div className="max-w-2xl mx-auto">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">現在の監視設定</h2>
@@ -225,7 +215,6 @@ export function ComprehensiveMonitoringDashboard() {
         </div>
       )}
 
-      {/* 監視制御 */}
       <ComprehensiveMonitoringControl
         onExecuteCheck={handleExecuteCheck}
         onSimulateChange={handleSimulateChange}
@@ -233,7 +222,6 @@ export function ComprehensiveMonitoringDashboard() {
         isLoading={isLoading}
       />
 
-      {/* 新規監視設定 */}
       {monitorings.length === 0 && (
         <ComprehensiveMonitoringSetup
           onSetup={handleSetup}
@@ -241,7 +229,6 @@ export function ComprehensiveMonitoringDashboard() {
         />
       )}
 
-      {/* 通知一覧 */}
       {notifications.length > 0 && (
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">監視通知履歴</h2>
@@ -302,3 +289,4 @@ export function ComprehensiveMonitoringDashboard() {
     </div>
   )
 }
+

@@ -22,7 +22,6 @@ export const LawsList = () => {
       try {
         setLoading(true)
         
-        // 法令データとウォッチリストを並行で取得
         const [lawsResponse, watchListsResponse] = await Promise.all([
           getAllLaws(),
           getUserWatchLists(userId)
@@ -31,7 +30,6 @@ export const LawsList = () => {
         setLaws(lawsResponse.laws)
         setWatchLists(watchListsResponse.watchLists || [])
         
-        // 監視中の法令IDをセットに格納
         const watchedLawIds = new Set<string>()
         watchListsResponse.watchLists?.forEach((list: WatchList) => {
           list.lawIds.forEach(id => watchedLawIds.add(id))
@@ -53,7 +51,6 @@ export const LawsList = () => {
     const isWatching = watchingLaws.has(law.id)
     
     if (isWatching) {
-      // 監視解除 - 該当する全てのリストから削除
       setProcessingLaw(law.id)
       try {
         const listsWithLaw = watchLists.filter(list => list.lawIds.includes(law.id))
@@ -66,7 +63,6 @@ export const LawsList = () => {
           return newSet
         })
         
-        // ウォッチリストデータを更新
         const updatedResponse = await getUserWatchLists(userId)
         setWatchLists(updatedResponse.watchLists || [])
       } catch (err) {
@@ -76,7 +72,6 @@ export const LawsList = () => {
         setProcessingLaw(null)
       }
     } else {
-      // 監視追加 - リスト選択画面を表示
       setSelectedLaw(law)
       setShowSelector(true)
     }
@@ -90,7 +85,6 @@ export const LawsList = () => {
       await addLawToWatchList(watchListId, selectedLaw.id)
       setWatchingLaws(prev => new Set(prev).add(selectedLaw.id))
       
-      // ウォッチリストデータを更新
       const updatedResponse = await getUserWatchLists(userId)
       setWatchLists(updatedResponse.watchLists || [])
     } catch (err) {
@@ -169,7 +163,7 @@ export const LawsList = () => {
                     className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded transition-colors"
                     title="e-Gov法令検索で詳細を確認"
                   >
-                    📋 詳細
+                    詳細
                   </a>
                 </div>
                 <p className="text-gray-600">{law.number}</p>
