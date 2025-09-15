@@ -122,10 +122,10 @@ export class PrismaLawRepository implements LawRepository {
     )
   }
 
-  async findByIds(ids: LawId[]): Promise<Law[]> {
+  async findByIds(ids: readonly LawId[]): Promise<Law[]> {
     const laws = await this.prisma.law.findMany({
       where: {
-        id: { in: ids }
+        id: { in: [...ids] }
       },
       orderBy: { name: 'asc' }
     })

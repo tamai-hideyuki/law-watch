@@ -135,7 +135,19 @@ describe('WatchManagementApp', () => {
         })
       ]
 
+      const mockLaws = [
+        {
+          id: '322AC0000000049',
+          name: '労働基準法',
+          number: '昭和二十二年法律第四十九号',
+          category: '労働',
+          status: '現行',
+          promulgationDate: '1947-04-07'
+        }
+      ]
+
       mockWatchListRepository.findByUserId = vi.fn().mockResolvedValue(mockWatchLists)
+      mockLawRepository.findByIds = vi.fn().mockResolvedValue(mockLaws)
 
       const req = new Request('http://localhost/monitoring/watch/user-1', {
         method: 'GET'
