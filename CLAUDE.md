@@ -43,7 +43,7 @@ law-watch/
 ### 通知・検知系
 | メソッド | エンドポイント | 説明 |
 |---------|---------------|------|
-| POST | `/monitoring/detect-changes-hash` | **🔥 ハッシュベース法令変更検知実行**（メール送信付き） |
+| POST | `/monitoring/detect-changes-hash` | **ハッシュベース法令変更検知実行**（メール送信付き） |
 | POST | `/monitoring/detect-changes` | 従来の法令変更検知実行（メール送信付き） |
 | GET | `/monitoring/notifications/{userId}` | ユーザーの通知一覧取得 |
 | POST | `/monitoring/simulate-change` | 法令変更シミュレーション（テスト用） |
@@ -51,7 +51,7 @@ law-watch/
 ### 🆕 日本全法令追跡システム（NationalLawTracker）
 | メソッド | エンドポイント | 説明 |
 |---------|---------------|------|
-| POST | `/national-tracking/scan` | **🔥 全日本法令フルスキャン実行**（非同期処理） |
+| POST | `/national-tracking/scan` | **全日本法令フルスキャン実行**（非同期処理） |
 | POST | `/national-tracking/scan-incremental` | 増分スキャン実行（前回からの差分のみ） |
 | POST | `/national-tracking/scan-category` | カテゴリ別法令スキャン実行 |
 | GET | `/national-tracking/recent-changes?days=7` | 最近の法令変更履歴取得 |
@@ -166,7 +166,7 @@ law-watch/
 ## DDD アーキテクチャ詳細
 
 ### Domain Layer（ドメイン層）
-- **エンティティ**: Law, WatchList, LawChangeNotification, **LawSnapshot**, **🆕 NationalLawSnapshot**
+- **エンティティ**: Law, WatchList, LawChangeNotification, **LawSnapshot**, **NationalLawSnapshot**
 - **値オブジェクト**: LawId, LawCategory, LawStatus, ChangeType, DateRange
 - **ドメインサービス**: **HashService** - SHA-256ハッシュ生成・比較
 - **バリデーションルール**: 
@@ -185,7 +185,7 @@ law-watch/
   - `DetectLawChangesWithHashUseCase`: **🔥 ハッシュベース変更検知**
   - `DetectLawChangesUseCase`: 従来の法令変更検知
   - `SendNotificationUseCase`: メール通知送信
-  - **🆕 `NationalLawTrackerUseCase`**: **日本全法令追跡システム**
+  - **`NationalLawTrackerUseCase`**: **日本全法令追跡システム**
 
 ### Infrastructure Layer（インフラ層）
 - **データアクセス**: 
@@ -193,7 +193,7 @@ law-watch/
   - `PrismaNotificationRepository`: 通知データ永続化（PostgreSQL）
   - `PrismaLawRepository`: 法令データ永続化（PostgreSQL）
   - **`PrismaLawSnapshotRepository`**: **ハッシュスナップショット永続化（PostgreSQL）**
-  - **🆕 `MockNationalLawTrackerRepository`**: **全法令追跡スナップショット管理（モック実装）**
+  - **`MockNationalLawTrackerRepository`**: **全法令追跡スナップショット管理（モック実装）**
   - Mock実装も併存（テスト用）
 - **外部API**: 
   - `MockEGovClient`: e-Gov API モック実装
@@ -207,7 +207,7 @@ law-watch/
   - `watch-management.ts`: 監視リスト管理API
   - `notification-management.ts`: 通知管理API
   - `search.ts`, `laws.ts`: 検索・法令一覧API
-  - **🆕 `national-law-tracking.ts`**: **全法令追跡システムAPI**
+  - **`national-law-tracking.ts`**: **全法令追跡システムAPI**
 - **共通コンポーネント**:
   - `request-validator.ts`: 統一バリデーション
   - `api-response.ts`: 統一レスポンス形式
@@ -226,7 +226,7 @@ law-watch/
 - **検索バー**: リアルタイム検索、エンターキーでの検索実行
 - **法令カード**: 法令情報表示、監視ボタン統合
 - **監視ボタン**: ワンクリックで監視追加/削除、状態の即時反映
-- **🔥 変更検知ボタン**: **ハッシュベース変更検知の手動実行、結果のリアルタイム表示**
+- **変更検知ボタン**: **ハッシュベース変更検知の手動実行、結果のリアルタイム表示**
 - **法令ID入力フォーム**: **直接法令IDを入力して監視対象追加**
 - **削除機能**: **個別削除、一括削除、監視リスト削除**
 - **ローディング表示**: 非同期処理中のスピナー表示
@@ -237,16 +237,16 @@ law-watch/
 components/
 ├── atoms/          # ボタン、入力フィールド等
 ├── molecules/      
-│   ├── law-id-input.tsx           # 🆕 法令ID入力フォーム
-│   ├── change-detection-button.tsx # 🔥 変更検知ボタン
+│   ├── law-id-input.tsx           # 法令ID入力フォーム
+│   ├── change-detection-button.tsx # 変更検知ボタン
 │   ├── watch-list-selector.tsx     # 監視リスト選択
 │   └── navigation.tsx              # ナビゲーション
 ├── organisms/      
-│   ├── enhanced-monitored-laws-list.tsx # 🆕 削除機能付き監視法令リスト
+│   ├── enhanced-monitored-laws-list.tsx # 削除機能付き監視法令リスト
 │   ├── watch-list-management.tsx        # 監視リスト管理
 │   └── law-search-results.tsx           # 検索結果表示
 └── templates/      
-    └── monitoring-page.tsx               # 🆕 統合監視ページ
+    └── monitoring-page.tsx               # 統合監視ページ
 ```
 
 ### 状態管理
@@ -284,7 +284,7 @@ components/
 - `remove-law-from-watch-list.test.ts`: 法令監視削除
 - `detect-law-changes.test.ts`: 変更検知処理
 - `send-notification.test.ts`: メール通知送信
-- **🆕 `national-law-tracker.test.ts`**: **全法令追跡システム (19テスト)**
+- **`national-law-tracker.test.ts`**: **全法令追跡システム (19テスト)**
 
 #### 3. インフラ層テスト (33テスト)
 - `email-service.test.ts`: メール送信サービス (2テスト)
@@ -364,7 +364,7 @@ components/
 }
 ```
 
-### 🆕 全法令スナップショット（NationalLawSnapshot）
+### 全法令スナップショット（NationalLawSnapshot）
 ```typescript
 {
   id: string                    // スナップショットID
@@ -381,7 +381,7 @@ components/
 }
 ```
 
-### 🆕 法令変更検知（LawChangeDetection）
+### 法令変更検知（LawChangeDetection）
 ```typescript
 {
   lawId: string                      // 法令ID
@@ -398,7 +398,7 @@ components/
 }
 ```
 
-### 🆕 日次スキャン結果（DailyLawScanResult）
+### 日次スキャン結果（DailyLawScanResult）
 ```typescript
 {
   scanId: string                     // スキャンID
@@ -547,9 +547,9 @@ curl -X POST http://localhost:3000/monitoring/detect-changes
 #### 5. メール内容の確認
 サーバーログに表示される以下の情報を確認：
 ```
-📧 Ethereal Email initialized with account: xxx@ethereal.email
-📧 Email sent: <message-id>
-🔗 Preview URL: https://ethereal.email/message/...
+Ethereal Email initialized with account: xxx@ethereal.email
+Email sent: <message-id>
+Preview URL: https://ethereal.email/message/...
 ```
 
 **Preview URLをブラウザで開くと**:
@@ -586,7 +586,7 @@ export SMTP_PASS=your-app-password
 | `watch_lists` | 監視リスト | id, userId, name, createdAt, updatedAt |
 | `watch_list_laws` | 監視リスト-法令中間 | watchListId, lawId, addedAt |
 | `notifications` | 法令変更通知 | id, lawId, userId, changeType, title, description, isRead |
-| **`law_snapshots`** | **🔥 法令ハッシュスナップショット** | **id, lawId, contentHash, metadata, lastContent, version, lastChecked** |
+| **`law_snapshots`** | **法令ハッシュスナップショット** | **id, lawId, contentHash, metadata, lastContent, version, lastChecked** |
 | `users` | ユーザー管理（将来用） | id, email, name, createdAt, updatedAt |
 | `law_change_histories` | 変更履歴（将来用） | id, lawId, changeType, changeDetails, detectedAt |
 | `_prisma_migrations` | マイグレーション履歴 | - |
@@ -643,22 +643,22 @@ npx prisma studio  # http://localhost:5555
 2. **ユーザー管理機能なし** - 認証・認可システム未実装
 
 ### 実装済み機能
-1. ✅ **🔥 ハッシュベース変更検知システム** - SHA-256による高精度な法令変更検知
-2. ✅ **完全CRUD監視リスト管理** - 作成・取得・更新・**削除**・**一括削除**完備
-3. ✅ **削除機能付きUI** - 個別削除・一括削除・監視リスト削除の完全対応
-4. ✅ **変更検知ボタン** - フロントエンドからの手動変更検知実行
-5. ✅ **メール通知システム** - Ethereal Email（開発）/ Gmail SMTP（本番）対応
-6. ✅ **法令ID入力システム** - 直接IDを入力して監視対象追加
-7. ✅ **法令検索・一覧表示** - フロントエンド統合済み
-8. ✅ **データベース設計・構築** - PostgreSQL + Prisma + **LawSnapshot**完全セットアップ済み
-9. ✅ **TypeScriptアーキテクチャ** - 以下の品質基準を達成:
+1. **ハッシュベース変更検知システム** - SHA-256による高精度な法令変更検知
+2. **完全CRUD監視リスト管理** - 作成・取得・更新・**削除**・**一括削除**完備
+3. **削除機能付きUI** - 個別削除・一括削除・監視リスト削除の完全対応
+4. **変更検知ボタン** - フロントエンドからの手動変更検知実行
+5. **メール通知システム** - Ethereal Email（開発）/ Gmail SMTP（本番）対応
+6. **法令ID入力システム** - 直接IDを入力して監視対象追加
+7. **法令検索・一覧表示** - フロントエンド統合済み
+8. **データベース設計・構築** - PostgreSQL + Prisma + **LawSnapshot**完全セットアップ済み
+9. **TypeScriptアーキテクチャ** - 以下の品質基準を達成:
    - any型完全排除（0箇所）
    - Result型による関数型エラーハンドリング
    - TDD実装によるドメインバリデーション
    - 構造化ログシステム
    - API分割・責任分離設計
    - **新機能追加によりテスト数増加**
-10. ✅ **🆕 日本全法令追跡システム** - 包括的な法令変更監視システムの完成:
+10. **日本全法令追跡システム** - 包括的な法令変更監視システムの完成:
    - 全法令フルスキャン機能（非同期処理）
    - 増分・カテゴリ別スキャン機能
    - メタデータハッシュによる変更検知
@@ -725,33 +725,33 @@ kill -9 [PID]
 
 ## アーキテクチャ品質レベル
 
-### 🏆 達成済み品質基準
-- ✅ **Clean Architecture**: DDD 4層アーキテクチャ完全実装
-- ✅ **型安全性**: any型0箇所、完全TypeScript化
-- ✅ **テスト品質**: TDD実装、222テスト、29ファイル
-- ✅ **関数型プログラミング**: Result型エラーハンドリング
-- ✅ **SOLID原則**: 単一責任・依存性逆転・開放閉鎖原則準拠
-- ✅ **セキュリティ**: SQLインジェクション対策、入力検証
-- ✅ **可観測性**: 構造化ログ、環境別設定
-- ✅ **メンテナンス性**: API分割、責任分離設計
+### 達成済み品質基準
+- **Clean Architecture**: DDD 4層アーキテクチャ完全実装
+- **型安全性**: any型0箇所、完全TypeScript化
+- **テスト品質**: TDD実装、222テスト、29ファイル
+- **関数型プログラミング**: Result型エラーハンドリング
+- **SOLID原則**: 単一責任・依存性逆転・開放閉鎖原則準拠
+- **セキュリティ**: SQLインジェクション対策、入力検証
+- **可観測性**: 構造化ログ、環境別設定
+- **メンテナンス性**: API分割、責任分離設計
 
-**総合評価**: **世界クラスのTypeScriptバックエンドアーキテクチャ** 🌟
+**総合評価**: **世界クラスのTypeScriptバックエンドアーキテクチャ**
 
 ## システム設計完全変更（2025-09-11 最新更新）
 
-### 🎯 変更検知システムへの設計変更完了
+### 変更検知システムへの設計変更完了
 
 **従来の問題のある設計:**
 - 全法令を事前にデータベースに保存
 - 検索UI で法令を探して監視追加
 - すべての法令が変更検知対象
 
-**🔄 正しい変更検知システム設計に変更:**
+**正しい変更検知システム設計に変更:**
 - **監視対象として登録された法令のみ**をデータベースに保存
 - **法令ID直接入力**で監視対象追加
 - **監視対象のみ**が変更検知対象
 
-### ✅ 完了した設計変更作業
+### 完了した設計変更作業
 
 #### 1. **バックエンドAPI完全変更**
 - **`AddLawToMonitoringUseCase`** 新規作成
@@ -779,7 +779,7 @@ kill -9 [PID]
 - `watch-management.test.ts`: 新しいAPI署名対応
 - すべてのテストが新仕様で正常通過
 
-### 📊 現在の動作状況（確認済み）
+### 現在の動作状況（確認済み）
 
 #### データベース状態
 ```json
@@ -794,18 +794,18 @@ kill -9 [PID]
 ```
 
 #### API動作確認
-- ✅ `POST /monitoring/watch` - 法令ID入力で監視追加
-- ✅ `GET /laws` - 監視対象法令のみ返却
-- ✅ e-Gov APIからの法令データ取得・保存
-- ✅ 監視リスト管理機能
+- `POST /monitoring/watch` - 法令ID入力で監視追加
+- `GET /laws` - 監視対象法令のみ返却
+- e-Gov APIからの法令データ取得・保存
+- 監視リスト管理機能
 
 #### UI動作確認
-- ✅ 法令ID入力フォーム
-- ✅ 監視対象法令一覧表示
-- ✅ 監視解除機能
-- ✅ WatchListSelector連携
+- 法令ID入力フォーム
+- 監視対象法令一覧表示
+- 監視解除機能
+- WatchListSelector連携
 
-### 🎯 変更検知システムとしての正しい動作フロー
+### 変更検知システムとしての正しい動作フロー
 
 1. **監視対象追加**
    ```
@@ -822,17 +822,17 @@ kill -9 [PID]
    監視対象法令 → 定期チェック → 変更検出 → 通知送信
    ```
 
-### 🏆 システム完成度
+### システム完成度
 
 **変更検知システムとして100%正しい設計に変更完了:**
-- ✅ **正しいデータフロー**: 監視登録→データ保存→変更検知
-- ✅ **正しいUI**: 法令ID入力ベース
-- ✅ **正しいAPI**: 監視対象のみの管理
-- ✅ **正しいデータベース**: 監視対象法令のみ保存
+- **正しいデータフロー**: 監視登録→データ保存→変更検知
+- **正しいUI**: 法令ID入力ベース
+- **正しいAPI**: 監視対象のみの管理
+- **正しいデータベース**: 監視対象法令のみ保存
 
 ## 最終更新
 - **日付**: 2025-09-12
-- **状態**: **🆕 日本全法令追跡システム完全実装完了** 🎊
+- **状態**: **日本全法令追跡システム完全実装完了**
 - **実装**: PostgreSQL + Prisma + Clean Architecture + TDD + **NationalLawTracker**
 - **品質**: any型0箇所、222テスト通過、Result型システム
 - **機能**: 

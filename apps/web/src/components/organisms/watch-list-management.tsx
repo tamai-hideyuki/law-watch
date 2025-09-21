@@ -151,16 +151,48 @@ export const WatchListManagement = ({
           
           {expandedLists.has(watchList.id) && (
             <div className="mt-4 ml-8 space-y-2">
-              <h4 className="font-medium text-sm text-gray-700">監視中の法令ID:</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {watchList.lawIds.map((lawId) => (
-                  <div
-                    key={lawId}
-                    className="px-3 py-2 bg-gray-50 border rounded text-sm font-mono"
-                  >
-                    {lawId}
+              <h4 className="font-medium text-sm text-gray-700">監視中の法令:</h4>
+              <div className="space-y-2">
+                {watchList.laws && watchList.laws.length > 0 ? (
+                  watchList.laws.map((law) => (
+                    <a
+                      key={law.id}
+                      href={`https://elaws.e-gov.go.jp/document?lawid=${law.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block px-4 py-3 bg-gray-50 border rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900 hover:text-blue-600">
+                            {law.name}
+                            <svg className="inline-block w-3 h-3 ml-1 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1 space-x-3">
+                            <span className="font-mono">ID: {law.id}</span>
+                            <span>法令番号: {law.number}</span>
+                            <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
+                              {law.category}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </a>
+                  ))
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {watchList.lawIds.map((lawId) => (
+                      <div
+                        key={lawId}
+                        className="px-3 py-2 bg-gray-50 border rounded text-sm font-mono"
+                      >
+                        {lawId}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}

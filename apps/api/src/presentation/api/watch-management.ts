@@ -69,18 +69,34 @@ export const createWatchManagementApp = (
 
       const watchLists = await watchListRepository.findByUserId(userId)
 
+      // 法令の詳細情報を取得
+      const watchListsWithLaws = await Promise.all(
+        watchLists.map(async (watchList) => {
+          const laws = await lawRepository.findByIds(watchList.lawIds)
+          return {
+            id: watchList.id,
+            name: watchList.name,
+            lawIds: watchList.lawIds,
+            laws: laws.map(law => ({
+              id: law.id,
+              name: law.name,
+              number: law.number,
+              category: law.category,
+              status: law.status,
+              promulgationDate: law.promulgationDate
+            })),
+            createdAt: watchList.createdAt,
+            updatedAt: watchList.updatedAt
+          }
+        })
+      )
+
       return successResponse(c, undefined, {
-        watchLists: watchLists.map(watchList => ({
-          id: watchList.id,
-          name: watchList.name,
-          lawIds: watchList.lawIds,
-          createdAt: watchList.createdAt,
-          updatedAt: watchList.updatedAt
-        }))
+        watchLists: watchListsWithLaws
       })
     } catch (error) {
-      logger.error('Get watch lists failed', { 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      logger.error('Get watch lists failed', {
+        error: error instanceof Error ? error.message : 'Unknown error'
       })
       return errorResponse(c, 'Internal server error')
     }
@@ -101,18 +117,29 @@ export const createWatchManagementApp = (
         return notFoundResponse(c, 'Watch list')
       }
 
+      // 法令の詳細情報を取得
+      const laws = await lawRepository.findByIds(watchList.lawIds)
+
       return successResponse(c, undefined, {
         watchList: {
           id: watchList.id,
           name: watchList.name,
           lawIds: watchList.lawIds,
+          laws: laws.map(law => ({
+            id: law.id,
+            name: law.name,
+            number: law.number,
+            category: law.category,
+            status: law.status,
+            promulgationDate: law.promulgationDate
+          })),
           createdAt: watchList.createdAt,
           updatedAt: watchList.updatedAt
         }
       })
     } catch (error) {
-      logger.error('Get watch list detail failed', { 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      logger.error('Get watch list detail failed', {
+        error: error instanceof Error ? error.message : 'Unknown error'
       })
       return errorResponse(c, 'Internal server error')
     }

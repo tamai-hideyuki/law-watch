@@ -23,6 +23,7 @@ export interface WatchList {
   userId: string
   name: string
   lawIds: string[]
+  laws?: LawData[]  // 法令の詳細情報を追加
   createdAt: string
   updatedAt: string
 }

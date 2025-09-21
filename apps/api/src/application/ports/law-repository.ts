@@ -6,7 +6,7 @@ export interface LawRepository {
   findById(id: LawId): Promise<Law | null>
   search(query: SearchQuery): Promise<SearchResult>
   findAll(): Promise<Law[]>
-  findByIds(ids: LawId[]): Promise<Law[]>
+  findByIds(ids: readonly LawId[]): Promise<Law[]>
   findByCategory(category: LawCategory): Promise<Law[]>
   delete(id: LawId): Promise<Result<void, string>>
 }

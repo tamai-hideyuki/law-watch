@@ -29,12 +29,40 @@ export const createLawsApp = (lawRepository: LawRepository, egovApi: EGovApi) =>
     app.get('/laws', async (c) => {
       // 監視対象として登録されている法令のみを取得
       const result = await getMonitoredLawsUseCase.execute()
-      
+
       return c.json({
         totalCount: result.totalCount,
         laws: result.laws,
         executedAt: result.executedAt
       })
+    })
+
+    // 特定の法令詳細を取得
+    app.get('/laws/:lawId', async (c) => {
+      const lawIdString = c.req.param('lawId')
+
+      try {
+        const lawId = createLawId(lawIdString)
+        const law = await lawRepository.findById(lawId)
+
+        if (!law) {
+          return c.json({ error: 'Law not found' }, 404)
+        }
+
+        return c.json({
+          id: law.id,
+          name: law.name,
+          number: law.number,
+          category: law.category,
+          status: law.status,
+          promulgationDate: law.promulgationDate,
+          detailUrl: `https://elaws.e-gov.go.jp/document?lawid=${law.id}`
+        })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        logger.error(`Error fetching law: ${lawIdString}`, { error: errorMessage })
+        return c.json({ error: errorMessage }, 500)
+      }
     })
 
     // 孤立した法令データを削除するためのエンドポイント

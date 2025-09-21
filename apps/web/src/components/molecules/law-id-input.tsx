@@ -41,9 +41,6 @@ export const LawIdInput = ({ onSubmit, loading = false }: LawIdInputProps) => {
         <p>法令IDの例:</p>
         <ul className="list-disc list-inside mt-1 space-y-1">
           <li>322AC0000000049 - 労働基準法</li>
-          <li>347AC0000000057 - 労働安全衛生法</li>
-          <li>325AC1000000201 - 建築基準法</li>
-          <li>412AC0000000061 - 消費者契約法</li>
         </ul>
       </div>
     </form>

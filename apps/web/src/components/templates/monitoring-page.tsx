@@ -185,7 +185,7 @@ export const MonitoringPage = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">法令監視対象追加</h2>
             <p className="text-gray-600 mb-4">
-              e-Gov法令APIの法令IDを入力して監視対象に追加してください。
+              e-Gov法令APIの法令IDを入力することで監視対象を追加することができます。
               <br />
               法令IDは<a href="https://elaws.e-gov.go.jp/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">e-Gov法令検索</a>で確認できます。
             </p>
@@ -193,9 +193,9 @@ export const MonitoringPage = () => {
           </div>
 
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">🔍 法令変更検知</h2>
+            <h2 className="text-xl font-semibold mb-4">法令変更検知</h2>
             <p className="text-gray-600 mb-4">
-              監視中の法令に変更がないかチェックします。変更が検出された場合、メール通知も送信されます。
+              監視中の法令に変更がないかチェックします。変更が検出された場合は、メール通知も送信されます。
             </p>
             <ChangeDetectionButton onDetectionComplete={() => loadData()} />
           </div>
